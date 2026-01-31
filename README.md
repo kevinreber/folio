@@ -86,14 +86,98 @@ Folio takes a pragmatic, tiered approach to data collection:
 
 ## Tech Stack
 
-- **TypeScript/Node.js** — Core CLI and capture tooling
-- **SQLite** — Local data storage
-- **Ink (React for CLI)** — TUI for review and enrichment
-- **LLM integration** — For synthesis/packaging (local or cloud, user choice)
+- **Rust** — Fast, reliable CLI with rich terminal output
+- **SQLite** — Local-first data storage
+- **Ratatui** — Interactive TUI for browsing activities
+- **Axum** — REST API and MCP server
+- **git2** — Native Git integration
+
+## Installation
+
+```bash
+# Build from source
+cargo build --release
+
+# Install globally
+cargo install --path .
+```
+
+## Quick Start
+
+```bash
+# Initialize configuration
+folio config --init
+
+# Capture your first accomplishment
+folio capture "Implemented user authentication" \
+  --impact "Reduced login time by 50%" \
+  --project "backend-api" \
+  --importance high
+
+# Sync from git repositories
+folio sync --source git --days 30
+
+# View your activities
+folio list
+
+# Generate a weekly digest
+folio digest weekly
+
+# Export as brag document
+folio export --brag --output brag-doc.md
+
+# Launch interactive TUI
+folio tui
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `capture` | Capture a new accomplishment |
+| `list` | List recent activities |
+| `show` | Show activity details |
+| `search` | Search activities with fuzzy matching |
+| `edit` | Edit an existing activity |
+| `delete` | Delete an activity |
+| `promote` | Convert activity to STAR-formatted accomplishment |
+| `sync` | Sync from Git, GitHub, or Linear |
+| `export` | Export as markdown, JSON, YAML, or resume bullets |
+| `import` | Import activities from file |
+| `digest` | Generate daily/weekly/monthly digest |
+| `review` | Generate performance review summary |
+| `match` | Match experience against job description |
+| `tui` | Launch interactive terminal UI |
+| `serve` | Start REST API or MCP server |
+| `watch` | Background git monitoring daemon |
+| `config` | Manage configuration |
+| `stats` | Show activity statistics |
+
+## Documentation
+
+- [Full Features Guide](./docs/FEATURES.md) — Detailed documentation with examples
+- [Architecture](./ARCHITECTURE.md) — Technical design and data models
 
 ## Status
 
-🚧 **Early design phase** — Architecture and data model being finalized.
+✅ **Implemented Features:**
+- Core CLI with capture, list, show, delete, stats
+- Search with fuzzy matching
+- Edit and promote commands
+- Git repository scanning
+- GitHub and Linear integrations
+- STAR story builder
+- Resume bullet generator
+- Auto-tagging (skills, themes)
+- Weekly/monthly digests
+- Performance review generator
+- Job description matching
+- Export (Markdown, JSON, YAML)
+- Interactive TUI
+- REST API server
+- MCP server for AI integration
+- Background git watcher
+- Configuration management
 
 ## License
 

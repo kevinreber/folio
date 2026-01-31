@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use rusqlite::{params, Connection};
 use std::path::PathBuf;
 
-use crate::types::{Activity, ActivitySource, ActivityType, Importance};
+use crate::types::{Activity, ActivitySource, ActivityType, Importance, Accomplishment, Metric};
 
 const SCHEMA_VERSION: i32 = 1;
 
@@ -296,6 +296,262 @@ impl Database {
             .conn
             .query_row("SELECT COUNT(*) FROM activities", [], |row| row.get(0))?;
         Ok(count)
+    }
+
+    /// Update an existing activity
+    pub fn update_activity(
+        &self,
+        id: &str,
+        title: Option<&str>,
+        impact: Option<&str>,
+        project: Option<&str>,
+        employer: Option<&str>,
+        importance: Option<&str>,
+    ) -> Result<()> {
+        let now = Utc::now().to_rfc3339();
+
+        // Build dynamic update query
+        let mut updates = vec!["updated_at = ?1"];
+        let mut param_idx = 2;
+
+        if title.is_some() {
+            updates.push("title = ?2");
+            param_idx = 3;
+        }
+
+        // Get current activity to preserve metadata
+        let current = self.get_activity(id)?
+            .or_else(|| self.get_activity_by_partial_id(id).ok().flatten())
+            .context("Activity not found")?;
+
+        let mut metadata = current.metadata.clone();
+        if let Some(impact_val) = impact {
+            metadata["impact"] = serde_json::json!(impact_val);
+        }
+
+        // Use simple update for now
+        self.conn.execute(
+            r#"
+            UPDATE activities SET
+                title = COALESCE(?2, title),
+                description = COALESCE(?3, description),
+                project = COALESCE(?4, project),
+                employer = COALESCE(?5, employer),
+                importance = COALESCE(?6, importance),
+                metadata = ?7,
+                updated_at = ?8
+            WHERE id = ?1 OR id LIKE ?1 || '%'
+            "#,
+            params![
+                id,
+                title,
+                impact,
+                project,
+                employer,
+                importance,
+                metadata.to_string(),
+                now,
+            ],
+        )?;
+
+        Ok(())
+    }
+
+    /// Check if an activity exists by metadata field
+    pub fn activity_exists_by_metadata(&self, key: &str, value: &str) -> Result<bool> {
+        let pattern = format!("%\"{}\":\"{}\"%" , key, value);
+        let count: i64 = self.conn.query_row(
+            "SELECT COUNT(*) FROM activities WHERE metadata LIKE ?1",
+            params![pattern],
+            |row| row.get(0),
+        )?;
+        Ok(count > 0)
+    }
+
+    /// Insert a new accomplishment
+    pub fn insert_accomplishment(&self, accomplishment: &Accomplishment) -> Result<()> {
+        self.conn.execute(
+            r#"
+            INSERT INTO accomplishments (
+                id, title, situation, task, action, result,
+                metrics, skills, themes, employer, role,
+                start_date, end_date, generated_bullets, generated_story,
+                created_at, updated_at
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
+            "#,
+            params![
+                accomplishment.id,
+                accomplishment.title,
+                accomplishment.situation,
+                accomplishment.task,
+                accomplishment.action,
+                accomplishment.result,
+                serde_json::to_string(&accomplishment.metrics)?,
+                serde_json::to_string(&accomplishment.skills)?,
+                serde_json::to_string(&accomplishment.themes)?,
+                accomplishment.employer,
+                accomplishment.role,
+                accomplishment.start_date.map(|d| d.to_rfc3339()),
+                accomplishment.end_date.map(|d| d.to_rfc3339()),
+                serde_json::to_string(&accomplishment.generated_bullets)?,
+                accomplishment.generated_story,
+                accomplishment.created_at.to_rfc3339(),
+                accomplishment.updated_at.to_rfc3339(),
+            ],
+        )?;
+
+        // Link activities
+        for activity_id in &accomplishment.activity_ids {
+            self.conn.execute(
+                "INSERT OR IGNORE INTO activity_accomplishment_links (activity_id, accomplishment_id) VALUES (?1, ?2)",
+                params![activity_id, accomplishment.id],
+            )?;
+        }
+
+        Ok(())
+    }
+
+    /// List all accomplishments
+    pub fn list_accomplishments(&self) -> Result<Vec<Accomplishment>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, title, situation, task, action, result,
+                    metrics, skills, themes, employer, role,
+                    start_date, end_date, generated_bullets, generated_story,
+                    created_at, updated_at
+             FROM accomplishments ORDER BY created_at DESC"
+        )?;
+
+        let accomplishments = stmt
+            .query_map([], |row| {
+                let id: String = row.get(0)?;
+
+                Ok(Accomplishment {
+                    id: id.clone(),
+                    title: row.get(1)?,
+                    situation: row.get(2)?,
+                    task: row.get(3)?,
+                    action: row.get(4)?,
+                    result: row.get(5)?,
+                    metrics: serde_json::from_str(&row.get::<_, String>(6)?)
+                        .unwrap_or_default(),
+                    skills: serde_json::from_str(&row.get::<_, String>(7)?)
+                        .unwrap_or_default(),
+                    themes: serde_json::from_str(&row.get::<_, String>(8)?)
+                        .unwrap_or_default(),
+                    employer: row.get(9)?,
+                    role: row.get(10)?,
+                    start_date: row.get::<_, Option<String>>(11)?
+                        .map(|s| parse_datetime(&s)),
+                    end_date: row.get::<_, Option<String>>(12)?
+                        .map(|s| parse_datetime(&s)),
+                    generated_bullets: serde_json::from_str(&row.get::<_, String>(13)?)
+                        .unwrap_or_default(),
+                    generated_story: row.get(14)?,
+                    created_at: parse_datetime(&row.get::<_, String>(15)?),
+                    updated_at: parse_datetime(&row.get::<_, String>(16)?),
+                    activity_ids: vec![], // Would need separate query to fetch
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(accomplishments)
+    }
+
+    /// Get a single accomplishment by ID
+    pub fn get_accomplishment(&self, id: &str) -> Result<Option<Accomplishment>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, title, situation, task, action, result,
+                    metrics, skills, themes, employer, role,
+                    start_date, end_date, generated_bullets, generated_story,
+                    created_at, updated_at
+             FROM accomplishments WHERE id = ?1 OR id LIKE ?1 || '%' LIMIT 1"
+        )?;
+
+        let mut rows = stmt.query(params![id])?;
+
+        if let Some(row) = rows.next()? {
+            let acc_id: String = row.get(0)?;
+
+            // Get linked activity IDs
+            let activity_ids: Vec<String> = self.conn
+                .prepare("SELECT activity_id FROM activity_accomplishment_links WHERE accomplishment_id = ?1")?
+                .query_map(params![&acc_id], |r| r.get(0))?
+                .collect::<Result<Vec<_>, _>>()?;
+
+            Ok(Some(Accomplishment {
+                id: acc_id,
+                title: row.get(1)?,
+                situation: row.get(2)?,
+                task: row.get(3)?,
+                action: row.get(4)?,
+                result: row.get(5)?,
+                metrics: serde_json::from_str(&row.get::<_, String>(6)?)
+                    .unwrap_or_default(),
+                skills: serde_json::from_str(&row.get::<_, String>(7)?)
+                    .unwrap_or_default(),
+                themes: serde_json::from_str(&row.get::<_, String>(8)?)
+                    .unwrap_or_default(),
+                employer: row.get(9)?,
+                role: row.get(10)?,
+                start_date: row.get::<_, Option<String>>(11)?
+                    .map(|s| parse_datetime(&s)),
+                end_date: row.get::<_, Option<String>>(12)?
+                    .map(|s| parse_datetime(&s)),
+                generated_bullets: serde_json::from_str(&row.get::<_, String>(13)?)
+                    .unwrap_or_default(),
+                generated_story: row.get(14)?,
+                created_at: parse_datetime(&row.get::<_, String>(15)?),
+                updated_at: parse_datetime(&row.get::<_, String>(16)?),
+                activity_ids,
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Search activities by text
+    pub fn search_activities(&self, query: &str, limit: u32) -> Result<Vec<Activity>> {
+        let pattern = format!("%{}%", query);
+
+        let mut stmt = self.conn.prepare(
+            "SELECT id, source, activity_type, timestamp, title, description,
+                    project, employer, importance, metadata, created_at, updated_at
+             FROM activities
+             WHERE title LIKE ?1 OR description LIKE ?1 OR project LIKE ?1
+             ORDER BY timestamp DESC
+             LIMIT ?2"
+        )?;
+
+        let activities = stmt
+            .query_map(params![pattern, limit], |row| {
+                Ok(Activity {
+                    id: row.get(0)?,
+                    source: row
+                        .get::<_, String>(1)?
+                        .parse()
+                        .unwrap_or(ActivitySource::Manual),
+                    activity_type: row
+                        .get::<_, String>(2)?
+                        .parse()
+                        .unwrap_or(ActivityType::ManualEntry),
+                    timestamp: parse_datetime(&row.get::<_, String>(3)?),
+                    title: row.get(4)?,
+                    description: row.get(5)?,
+                    project: row.get(6)?,
+                    employer: row.get(7)?,
+                    importance: row
+                        .get::<_, String>(8)?
+                        .parse()
+                        .unwrap_or(Importance::Medium),
+                    metadata: serde_json::from_str(&row.get::<_, String>(9)?)
+                        .unwrap_or(serde_json::json!({})),
+                    created_at: parse_datetime(&row.get::<_, String>(10)?),
+                    updated_at: parse_datetime(&row.get::<_, String>(11)?),
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(activities)
     }
 }
 
