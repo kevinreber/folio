@@ -2,6 +2,17 @@
 
 > Your career changelog. Capture, enrich, and package your professional accomplishments — own your narrative across your entire career.
 
+[![Documentation](https://img.shields.io/badge/docs-docusaurus-blue)](https://kevinreber.github.io/folio/)
+
+## Documentation
+
+Full documentation is available at **[kevinreber.github.io/folio](https://kevinreber.github.io/folio/)**
+
+- [Getting Started](https://kevinreber.github.io/folio/docs/getting-started) - Install and capture your first accomplishment
+- [CLI Reference](https://kevinreber.github.io/folio/docs/cli-reference) - Complete command documentation
+- [Usage Examples](https://kevinreber.github.io/folio/docs/examples/) - Real-world usage patterns
+- [Architecture](https://kevinreber.github.io/folio/docs/architecture) - Technical design details
+
 ## What is Folio?
 
 Folio is a local-first career accomplishment tracker that helps developers capture what they've done, enrich it with impact and context, and package it into interview-ready stories, resume bullets, and performance review summaries.
@@ -9,6 +20,27 @@ Folio is a local-first career accomplishment tracker that helps developers captu
 **The problem:** You do impactful work every day but forget the specifics by review/interview time. Even when you remember, translating "I fixed the thing" into "Reduced API latency by 40% through query optimization, impacting 2M daily requests" is hard.
 
 **The solution:** A prompted work journal that enriches itself when possible — capturing accomplishments while they're fresh and packaging them when you need them.
+
+## Quick Start
+
+```bash
+# Build from source
+git clone https://github.com/kevinreber/folio.git
+cd folio
+cargo build --release
+
+# Capture an accomplishment
+folio capture "Shipped payment retry system" \
+  --impact "15% fewer failed transactions" \
+  --project "payments" \
+  --importance high
+
+# View your activities
+folio list
+
+# See statistics
+folio stats
+```
 
 ## How It's Different
 
@@ -32,7 +64,7 @@ Folio is a local-first career accomplishment tracker that helps developers captu
 
 ## Architecture Overview
 
-See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the full technical design, including data models, collection strategies, enrichment workflows, and synthesis engine details.
+See the [Architecture documentation](https://kevinreber.github.io/folio/docs/architecture) for the full technical design.
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
@@ -50,50 +82,16 @@ See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the full technical design
    └──────────┘          └──────────────┘
 ```
 
-## Data Collection Strategy
-
-Folio takes a pragmatic, tiered approach to data collection:
-
-### Tier 1: Zero Config (Works Everywhere)
-- **Local git repos** — Commits, branches, diffs
-- **Manual entry** — The fallback that always works
-
-### Tier 2: Personal API Keys (5-10 min setup)
-- **GitHub PAT** — PRs, issues, code review comments
-- **Linear API key** — Issues you've worked on
-- **GitLab PAT** — Same as GitHub
-
-### Tier 3: Link Enrichment (Paste & Enrich)
-- Paste a GitHub PR URL → auto-fetch title, description, files changed
-- Paste a Jira/Linear URL → auto-fetch issue details (if accessible)
-
-### Tier 4: Triggered Screen Capture (Optional)
-- Keyboard shortcut → screenshot + OCR + annotation prompt
-- Captures anything on screen (Jira ticket, dashboard metrics, Slack message)
-- You control exactly what gets captured
-
-### Tier 5: Background Detection (Smart Nudges)
-- Git watcher detects significant merges → prompts you to capture
-- Weekly review of git activity — "Anything worth capturing?"
-
-## Planned Output Formats
-
-- **Resume bullets** — Quantified, action-oriented accomplishment statements
-- **STAR stories** — Situation, Task, Action, Result formatted for interviews
-- **Performance review summaries** — Grouped by theme/quarter
-- **Career timeline** — Visual overview of your professional journey
-- **JSON/Markdown export** — For use in other tools
-
 ## Tech Stack
 
-- **TypeScript/Node.js** — Core CLI and capture tooling
+- **Rust** — Core CLI and data layer
 - **SQLite** — Local data storage
-- **Ink (React for CLI)** — TUI for review and enrichment
-- **LLM integration** — For synthesis/packaging (local or cloud, user choice)
+- **clap** — CLI argument parsing
+- **LLM integration** — For synthesis/packaging (planned)
 
 ## Status
 
-🚧 **Early design phase** — Architecture and data model being finalized.
+🚧 **Active development** — Core CLI commands are working. Git scanning and synthesis features coming soon.
 
 ## License
 
