@@ -21,27 +21,6 @@ Folio is a local-first career accomplishment tracker that helps developers captu
 
 **The solution:** A prompted work journal that enriches itself when possible — capturing accomplishments while they're fresh and packaging them when you need them.
 
-## Quick Start
-
-```bash
-# Build from source
-git clone https://github.com/kevinreber/folio.git
-cd folio
-cargo build --release
-
-# Capture an accomplishment
-folio capture "Shipped payment retry system" \
-  --impact "15% fewer failed transactions" \
-  --project "payments" \
-  --importance high
-
-# View your activities
-folio list
-
-# See statistics
-folio stats
-```
-
 ## How It's Different
 
 | Tool | What it does | Gap |
@@ -84,14 +63,93 @@ See the [Architecture documentation](https://kevinreber.github.io/folio/docs/arc
 
 ## Tech Stack
 
-- **Rust** — Core CLI and data layer
-- **SQLite** — Local data storage
-- **clap** — CLI argument parsing
-- **LLM integration** — For synthesis/packaging (planned)
+- **Rust** — Fast, reliable CLI with rich terminal output
+- **SQLite** — Local-first data storage
+- **Ratatui** — Interactive TUI for browsing activities
+- **Axum** — REST API and MCP server
+- **git2** — Native Git integration
+
+## Installation
+
+```bash
+# Build from source
+cargo build --release
+
+# Install globally
+cargo install --path .
+```
+
+## Quick Start
+
+```bash
+# Initialize configuration
+folio config --init
+
+# Capture your first accomplishment
+folio capture "Implemented user authentication" \
+  --impact "Reduced login time by 50%" \
+  --project "backend-api" \
+  --importance high
+
+# Sync from git repositories
+folio sync --source git --days 30
+
+# View your activities
+folio list
+
+# Generate a weekly digest
+folio digest weekly
+
+# Export as brag document
+folio export --brag --output brag-doc.md
+
+# Launch interactive TUI
+folio tui
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `capture` | Capture a new accomplishment |
+| `list` | List recent activities |
+| `show` | Show activity details |
+| `search` | Search activities with fuzzy matching |
+| `edit` | Edit an existing activity |
+| `delete` | Delete an activity |
+| `promote` | Convert activity to STAR-formatted accomplishment |
+| `sync` | Sync from Git, GitHub, or Linear |
+| `export` | Export as markdown, JSON, YAML, or resume bullets |
+| `import` | Import activities from file |
+| `digest` | Generate daily/weekly/monthly digest |
+| `review` | Generate performance review summary |
+| `match` | Match experience against job description |
+| `tui` | Launch interactive terminal UI |
+| `serve` | Start REST API or MCP server |
+| `watch` | Background git monitoring daemon |
+| `config` | Manage configuration |
+| `stats` | Show activity statistics |
 
 ## Status
 
-🚧 **Active development** — Core CLI commands are working. Git scanning and synthesis features coming soon.
+✅ **Implemented Features:**
+- Core CLI with capture, list, show, delete, stats
+- Search with fuzzy matching
+- Edit and promote commands
+- Git repository scanning
+- GitHub and Linear integrations
+- STAR story builder
+- Resume bullet generator
+- Auto-tagging (skills, themes)
+- Weekly/monthly digests
+- Performance review generator
+- Job description matching
+- Export (Markdown, JSON, YAML)
+- Interactive TUI
+- REST API server
+- MCP server for AI integration
+- Background git watcher
+- Configuration management
 
 ## License
 

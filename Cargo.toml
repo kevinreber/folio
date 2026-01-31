@@ -1,18 +1,75 @@
 [package]
 name = "folio"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Local-first career accomplishment tracker"
 license = "MIT"
 
 [dependencies]
+# CLI and parsing
 clap = { version = "4", features = ["derive"] }
+
+# Database
 rusqlite = { version = "0.32", features = ["bundled"] }
+
+# Date/time
 chrono = { version = "0.4", features = ["serde"] }
+
+# Serialization
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+serde_yaml = "0.9"
+toml = "0.8"
+
+# Identifiers
 uuid = { version = "1", features = ["v4"] }
+
+# File system and paths
 dirs = "5"
+walkdir = "2"
+glob = "0.3"
+
+# Error handling
 anyhow = "1"
+thiserror = "1"
+
+# Terminal output
 colored = "2"
-tabled = "0.16"
+tabled = "0.15"
+
+# TUI
+ratatui = "0.26"
+crossterm = "0.27"
+
+# Git integration
+git2 = "0.19"
+
+# HTTP client for API integrations
+reqwest = { version = "0.12", features = ["json", "blocking"] }
+url = "2"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Web server for REST API and MCP
+axum = "0.7"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+
+# Regex for parsing
+regex = "1"
+
+# Fuzzy matching
+fuzzy-matcher = "0.3"
+
+# Environment variables
+dotenvy = "0.15"
+
+# Markdown rendering
+pulldown-cmark = "0.12"
+
+# Base64 encoding
+base64 = "0.22"
+
+[dev-dependencies]
+tempfile = "3"
