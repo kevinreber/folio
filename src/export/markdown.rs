@@ -30,11 +30,17 @@ pub fn export(data: &ExportData) -> Result<String> {
     md.push_str("## Summary\n\n");
 
     if !data.metadata.projects.is_empty() {
-        md.push_str(&format!("**Projects:** {}\n\n", data.metadata.projects.join(", ")));
+        md.push_str(&format!(
+            "**Projects:** {}\n\n",
+            data.metadata.projects.join(", ")
+        ));
     }
 
     if !data.metadata.employers.is_empty() {
-        md.push_str(&format!("**Employers:** {}\n\n", data.metadata.employers.join(", ")));
+        md.push_str(&format!(
+            "**Employers:** {}\n\n",
+            data.metadata.employers.join(", ")
+        ));
     }
 
     // Accomplishments section
@@ -67,7 +73,7 @@ pub fn export(data: &ExportData) -> Result<String> {
                 for metric in &acc.metrics {
                     md.push_str(&format!("- {} {}\n", metric.value, metric.description));
                 }
-                md.push_str("\n");
+                md.push('\n');
             }
 
             // Skills
@@ -81,7 +87,7 @@ pub fn export(data: &ExportData) -> Result<String> {
                 for bullet in &acc.generated_bullets {
                     md.push_str(&format!("- {}\n", bullet));
                 }
-                md.push_str("\n");
+                md.push('\n');
             }
 
             md.push_str("---\n\n");
@@ -93,9 +99,13 @@ pub fn export(data: &ExportData) -> Result<String> {
         md.push_str("## Activities\n\n");
 
         // Group by project
-        let mut by_project: std::collections::HashMap<String, Vec<_>> = std::collections::HashMap::new();
+        let mut by_project: std::collections::HashMap<String, Vec<_>> =
+            std::collections::HashMap::new();
         for activity in &data.activities {
-            let project = activity.project.clone().unwrap_or_else(|| "(No Project)".to_string());
+            let project = activity
+                .project
+                .clone()
+                .unwrap_or_else(|| "(No Project)".to_string());
             by_project.entry(project).or_default().push(activity);
         }
 
@@ -125,7 +135,7 @@ pub fn export(data: &ExportData) -> Result<String> {
                 }
             }
 
-            md.push_str("\n");
+            md.push('\n');
         }
     }
 
@@ -153,7 +163,8 @@ pub fn export_brag_doc(data: &ExportData) -> Result<String> {
     md.push_str("## Key Accomplishments\n\n");
 
     // High importance items first
-    let high_importance: Vec<_> = data.activities
+    let high_importance: Vec<_> = data
+        .activities
         .iter()
         .filter(|a| matches!(a.importance, Importance::High))
         .collect();
@@ -177,7 +188,8 @@ pub fn export_brag_doc(data: &ExportData) -> Result<String> {
     }
 
     // Other notable work
-    let medium_importance: Vec<_> = data.activities
+    let medium_importance: Vec<_> = data
+        .activities
         .iter()
         .filter(|a| matches!(a.importance, Importance::Medium))
         .collect();
@@ -190,9 +202,9 @@ pub fn export_brag_doc(data: &ExportData) -> Result<String> {
             if let Some(impact) = activity.metadata.get("impact").and_then(|v| v.as_str()) {
                 md.push_str(&format!(" - {}", impact));
             }
-            md.push_str("\n");
+            md.push('\n');
         }
-        md.push_str("\n");
+        md.push('\n');
     }
 
     Ok(md)
@@ -212,13 +224,17 @@ pub fn export_resume_bullets(data: &ExportData) -> Result<String> {
                 md.push_str(&format!("- {}\n", bullet));
             }
         }
-        md.push_str("\n");
+        md.push('\n');
     }
 
     // From activities
     md.push_str("## From Activities\n\n");
 
-    for activity in data.activities.iter().filter(|a| matches!(a.importance, Importance::High | Importance::Medium)) {
+    for activity in data
+        .activities
+        .iter()
+        .filter(|a| matches!(a.importance, Importance::High | Importance::Medium))
+    {
         let mut bullet = activity.title.clone();
 
         // Add impact if available

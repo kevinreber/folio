@@ -30,8 +30,20 @@ pub fn run(daemon: bool) -> Result<()> {
         }
     }
     println!();
-    println!("{} {} seconds", "Scan interval:".dimmed(), config.watcher.interval_seconds);
-    println!("{} {}", "Notifications:".dimmed(), if config.watcher.notifications { "enabled" } else { "disabled" });
+    println!(
+        "{} {} seconds",
+        "Scan interval:".dimmed(),
+        config.watcher.interval_seconds
+    );
+    println!(
+        "{} {}",
+        "Notifications:".dimmed(),
+        if config.watcher.notifications {
+            "enabled"
+        } else {
+            "disabled"
+        }
+    );
     println!();
 
     if daemon {
@@ -51,7 +63,11 @@ pub fn run(daemon: bool) -> Result<()> {
         if activities.is_empty() {
             println!("{}", "No new activities found.".dimmed());
         } else {
-            println!("{} Found {} new activities", "✓".green().bold(), activities.len());
+            println!(
+                "{} Found {} new activities",
+                "✓".green().bold(),
+                activities.len()
+            );
             for activity in &activities {
                 println!("  {} {}", "•".dimmed(), activity.title);
             }

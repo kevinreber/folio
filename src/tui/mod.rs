@@ -117,20 +117,32 @@ impl App {
             self.filtered_activities = (0..self.activities.len()).collect();
         } else {
             let query = self.search_query.to_lowercase();
-            self.filtered_activities = self.activities
+            self.filtered_activities = self
+                .activities
                 .iter()
                 .enumerate()
                 .filter(|(_, a)| {
                     a.title.to_lowercase().contains(&query)
-                        || a.project.as_ref().map(|p| p.to_lowercase().contains(&query)).unwrap_or(false)
-                        || a.description.as_ref().map(|d| d.to_lowercase().contains(&query)).unwrap_or(false)
+                        || a.project
+                            .as_ref()
+                            .map(|p| p.to_lowercase().contains(&query))
+                            .unwrap_or(false)
+                        || a.description
+                            .as_ref()
+                            .map(|d| d.to_lowercase().contains(&query))
+                            .unwrap_or(false)
                 })
                 .map(|(i, _)| i)
                 .collect();
         }
 
         // Reset selection if needed
-        if self.list_state.selected().map(|i| i >= self.filtered_activities.len()).unwrap_or(true) {
+        if self
+            .list_state
+            .selected()
+            .map(|i| i >= self.filtered_activities.len())
+            .unwrap_or(true)
+        {
             if !self.filtered_activities.is_empty() {
                 self.list_state.select(Some(0));
             } else {
@@ -252,19 +264,28 @@ fn ui(f: &mut Frame, app: &App) {
         .direction(Direction::Vertical)
         .margin(1)
         .constraints([
-            Constraint::Length(3),  // Tabs
-            Constraint::Min(0),     // Content
-            Constraint::Length(3),  // Status bar
+            Constraint::Length(3), // Tabs
+            Constraint::Min(0),    // Content
+            Constraint::Length(3), // Status bar
         ])
         .split(f.size());
 
     // Tabs
     let tab_titles = ["Activities", "Accomplishments", "Stats"];
-    let tabs = Tabs::new(tab_titles.iter().map(|t| Line::from(*t)).collect::<Vec<_>>())
-        .block(Block::default().borders(Borders::ALL).title("Folio"))
-        .select(app.current_tab)
-        .style(Style::default().fg(Color::Cyan))
-        .highlight_style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD));
+    let tabs = Tabs::new(
+        tab_titles
+            .iter()
+            .map(|t| Line::from(*t))
+            .collect::<Vec<_>>(),
+    )
+    .block(Block::default().borders(Borders::ALL).title("Folio"))
+    .select(app.current_tab)
+    .style(Style::default().fg(Color::Cyan))
+    .highlight_style(
+        Style::default()
+            .fg(Color::Yellow)
+            .add_modifier(Modifier::BOLD),
+    );
     f.render_widget(tabs, chunks[0]);
 
     // Content based on tab
@@ -277,7 +298,11 @@ fn ui(f: &mut Frame, app: &App) {
 
     // Status bar
     let status = if !app.search_query.is_empty() {
-        format!("Search: {} | {} results", app.search_query, app.filtered_activities.len())
+        format!(
+            "Search: {} | {} results",
+            app.search_query,
+            app.filtered_activities.len()
+        )
     } else if let Some(ref msg) = app.status_message {
         msg.clone()
     } else {
@@ -302,7 +327,8 @@ fn render_activities(f: &mut Frame, app: &App, area: Rect) {
         .split(area);
 
     // Activity list
-    let items: Vec<ListItem> = app.filtered_activities
+    let items: Vec<ListItem> = app
+        .filtered_activities
         .iter()
         .filter_map(|&i| app.activities.get(i))
         .map(|a| {
@@ -323,7 +349,11 @@ fn render_activities(f: &mut Frame, app: &App, area: Rect) {
 
     let list = List::new(items)
         .block(Block::default().borders(Borders::ALL).title("Activities"))
-        .highlight_style(Style::default().bg(Color::DarkGray).add_modifier(Modifier::BOLD))
+        .highlight_style(
+            Style::default()
+                .bg(Color::DarkGray)
+                .add_modifier(Modifier::BOLD),
+        )
         .highlight_symbol("▶ ");
 
     f.render_stateful_widget(list, chunks[0], &mut app.list_state.clone());
@@ -344,7 +374,10 @@ fn render_activities(f: &mut Frame, app: &App, area: Rect) {
                 Span::raw(activity.source.to_string()),
             ]),
             Line::from(vec![
-                Span::styled("Importance: ", Style::default().add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    "Importance: ",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
                 Span::raw(activity.importance.to_string()),
             ]),
         ];
@@ -358,14 +391,22 @@ fn render_activities(f: &mut Frame, app: &App, area: Rect) {
 
         if let Some(ref desc) = activity.description {
             lines.push(Line::from(""));
-            lines.push(Line::from(Span::styled("Description:", Style::default().add_modifier(Modifier::BOLD))));
+            lines.push(Line::from(Span::styled(
+                "Description:",
+                Style::default().add_modifier(Modifier::BOLD),
+            )));
             lines.push(Line::from(desc.as_str()));
         }
 
         if let Some(impact) = activity.metadata.get("impact").and_then(|v| v.as_str()) {
             lines.push(Line::from(""));
             lines.push(Line::from(vec![
-                Span::styled("Impact: ", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    "Impact: ",
+                    Style::default()
+                        .fg(Color::Green)
+                        .add_modifier(Modifier::BOLD),
+                ),
                 Span::raw(impact),
             ]));
         }
@@ -391,11 +432,24 @@ fn render_accomplishments(f: &mut Frame, _app: &App, area: Rect) {
 
 fn render_stats(f: &mut Frame, app: &App, area: Rect) {
     let total = app.activities.len();
-    let high = app.activities.iter().filter(|a| matches!(a.importance, Importance::High)).count();
-    let medium = app.activities.iter().filter(|a| matches!(a.importance, Importance::Medium)).count();
-    let low = app.activities.iter().filter(|a| matches!(a.importance, Importance::Low)).count();
+    let high = app
+        .activities
+        .iter()
+        .filter(|a| matches!(a.importance, Importance::High))
+        .count();
+    let medium = app
+        .activities
+        .iter()
+        .filter(|a| matches!(a.importance, Importance::Medium))
+        .count();
+    let low = app
+        .activities
+        .iter()
+        .filter(|a| matches!(a.importance, Importance::Low))
+        .count();
 
-    let mut projects: std::collections::HashSet<_> = app.activities
+    let projects: std::collections::HashSet<_> = app
+        .activities
         .iter()
         .filter_map(|a| a.project.clone())
         .collect();
@@ -404,7 +458,11 @@ fn render_stats(f: &mut Frame, app: &App, area: Rect) {
         "Total Activities: {}\n\n\
          By Importance:\n  High: {}\n  Medium: {}\n  Low: {}\n\n\
          Projects: {}",
-        total, high, medium, low, projects.len()
+        total,
+        high,
+        medium,
+        low,
+        projects.len()
     );
 
     let text = Paragraph::new(stats_text)

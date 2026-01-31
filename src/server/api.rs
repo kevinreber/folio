@@ -22,9 +22,7 @@ pub struct AppState {
 /// Start the REST API server
 pub async fn serve(host: &str, port: u16) -> Result<()> {
     let db = Database::open()?;
-    let state = Arc::new(AppState {
-        db: Mutex::new(db),
-    });
+    let state = Arc::new(AppState { db: Mutex::new(db) });
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -113,8 +111,9 @@ async fn list_activities(
     let db = state.db.lock().await;
     let limit = query.limit.unwrap_or(50);
 
-    let mut activities = db.list_activities(Some(limit))
-        .map_err(|e| ApiError { error: e.to_string() })?;
+    let mut activities = db.list_activities(Some(limit)).map_err(|e| ApiError {
+        error: e.to_string(),
+    })?;
 
     // Filter by project if specified
     if let Some(project) = query.project {
@@ -137,13 +136,13 @@ async fn create_activity(
 ) -> Result<impl IntoResponse, ApiError> {
     let db = state.db.lock().await;
 
-    let importance: Importance = req.importance
+    let importance: Importance = req
+        .importance
         .as_ref()
         .and_then(|i| i.parse().ok())
         .unwrap_or(Importance::Medium);
 
-    let mut activity = Activity::new_manual(&req.title)
-        .with_importance(importance);
+    let mut activity = Activity::new_manual(&req.title).with_importance(importance);
 
     if let Some(desc) = req.description {
         activity = activity.with_description(&desc);
@@ -161,8 +160,9 @@ async fn create_activity(
         activity = activity.with_employer(employer);
     }
 
-    db.insert_activity(&activity)
-        .map_err(|e| ApiError { error: e.to_string() })?;
+    db.insert_activity(&activity).map_err(|e| ApiError {
+        error: e.to_string(),
+    })?;
 
     Ok((StatusCode::CREATED, Json(activity)))
 }
@@ -174,7 +174,8 @@ async fn get_activity(
 ) -> Result<impl IntoResponse, StatusCode> {
     let db = state.db.lock().await;
 
-    let activity = db.get_activity(&id)
+    let activity = db
+        .get_activity(&id)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .or_else(|| db.get_activity_by_partial_id(&id).ok().flatten());
 
@@ -192,7 +193,8 @@ async fn delete_activity(
     let db = state.db.lock().await;
 
     // Find the activity first
-    let activity = db.get_activity(&id)
+    let activity = db
+        .get_activity(&id)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .or_else(|| db.get_activity_by_partial_id(&id).ok().flatten());
 
@@ -214,16 +216,23 @@ async fn search_activities(
     let db = state.db.lock().await;
     let limit = query.limit.unwrap_or(50);
 
-    let activities = db.list_activities(Some(100))
-        .map_err(|e| ApiError { error: e.to_string() })?;
+    let activities = db.list_activities(Some(100)).map_err(|e| ApiError {
+        error: e.to_string(),
+    })?;
 
     let search_term = query.q.to_lowercase();
     let results: Vec<_> = activities
         .into_iter()
         .filter(|a| {
             a.title.to_lowercase().contains(&search_term)
-                || a.description.as_ref().map(|d| d.to_lowercase().contains(&search_term)).unwrap_or(false)
-                || a.project.as_ref().map(|p| p.to_lowercase().contains(&search_term)).unwrap_or(false)
+                || a.description
+                    .as_ref()
+                    .map(|d| d.to_lowercase().contains(&search_term))
+                    .unwrap_or(false)
+                || a.project
+                    .as_ref()
+                    .map(|p| p.to_lowercase().contains(&search_term))
+                    .unwrap_or(false)
         })
         .take(limit as usize)
         .collect();
@@ -232,20 +241,28 @@ async fn search_activities(
 }
 
 // Get statistics
-async fn get_stats(
-    State(state): State<Arc<AppState>>,
-) -> Result<impl IntoResponse, ApiError> {
+async fn get_stats(State(state): State<Arc<AppState>>) -> Result<impl IntoResponse, ApiError> {
     let db = state.db.lock().await;
 
-    let activities = db.list_activities(None)
-        .map_err(|e| ApiError { error: e.to_string() })?;
+    let activities = db.list_activities(None).map_err(|e| ApiError {
+        error: e.to_string(),
+    })?;
 
     let total = activities.len();
-    let high = activities.iter().filter(|a| matches!(a.importance, Importance::High)).count();
-    let medium = activities.iter().filter(|a| matches!(a.importance, Importance::Medium)).count();
-    let low = activities.iter().filter(|a| matches!(a.importance, Importance::Low)).count();
+    let high = activities
+        .iter()
+        .filter(|a| matches!(a.importance, Importance::High))
+        .count();
+    let medium = activities
+        .iter()
+        .filter(|a| matches!(a.importance, Importance::Medium))
+        .count();
+    let low = activities
+        .iter()
+        .filter(|a| matches!(a.importance, Importance::Low))
+        .count();
 
-    let mut projects: std::collections::HashSet<_> = activities
+    let projects: std::collections::HashSet<_> = activities
         .iter()
         .filter_map(|a| a.project.clone())
         .collect();
@@ -280,21 +297,18 @@ async fn export_data(
     let db = state.db.lock().await;
     let format = query.format.unwrap_or_else(|| "json".to_string());
 
-    let activities = db.list_activities(None)
-        .map_err(|e| ApiError { error: e.to_string() })?;
+    let activities = db.list_activities(None).map_err(|e| ApiError {
+        error: e.to_string(),
+    })?;
 
     match format.as_str() {
-        "json" => {
-            Ok(Json(serde_json::json!({
-                "activities": activities,
-                "exported_at": chrono::Utc::now().to_rfc3339()
-            })))
-        }
-        _ => {
-            Ok(Json(serde_json::json!({
-                "activities": activities,
-                "exported_at": chrono::Utc::now().to_rfc3339()
-            })))
-        }
+        "json" => Ok(Json(serde_json::json!({
+            "activities": activities,
+            "exported_at": chrono::Utc::now().to_rfc3339()
+        }))),
+        _ => Ok(Json(serde_json::json!({
+            "activities": activities,
+            "exported_at": chrono::Utc::now().to_rfc3339()
+        }))),
     }
 }

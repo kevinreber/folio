@@ -1,8 +1,8 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
-use crate::types::{Activity, Accomplishment};
 use super::AutoTagger;
+use crate::types::Activity;
 
 /// Matcher for comparing accomplishments against job descriptions
 pub struct JobMatcher {
@@ -69,13 +69,19 @@ impl JobMatcher {
         for line in lines {
             let line_lower = line.to_lowercase();
 
-            if line_lower.contains("requirement") || line_lower.contains("must have") || line_lower.contains("you will") {
+            if line_lower.contains("requirement")
+                || line_lower.contains("must have")
+                || line_lower.contains("you will")
+            {
                 in_requirements = true;
                 in_preferred = false;
                 continue;
             }
 
-            if line_lower.contains("preferred") || line_lower.contains("nice to have") || line_lower.contains("bonus") {
+            if line_lower.contains("preferred")
+                || line_lower.contains("nice to have")
+                || line_lower.contains("bonus")
+            {
                 in_requirements = false;
                 in_preferred = true;
                 continue;
@@ -118,7 +124,6 @@ impl JobMatcher {
         let mut matched_preferred = Vec::new();
         let mut gaps = Vec::new();
         let mut talking_points = Vec::new();
-        let mut recommended_activities = Vec::new();
 
         // Extract skills from all activities
         let activity_skills: HashMap<String, Vec<String>> = activities
@@ -139,7 +144,12 @@ impl JobMatcher {
 
             for activity in activities {
                 if let Some(skills) = activity_skills.get(&activity.id) {
-                    let match_score = self.calculate_match_score(&req_keywords, skills, &activity.title, activity.description.as_deref());
+                    let match_score = self.calculate_match_score(
+                        &req_keywords,
+                        skills,
+                        &activity.title,
+                        activity.description.as_deref(),
+                    );
                     if match_score > 0.3 {
                         supporting.push(activity.id.clone());
                         best_confidence = best_confidence.max(match_score);
@@ -179,7 +189,12 @@ impl JobMatcher {
 
             for activity in activities {
                 if let Some(skills) = activity_skills.get(&activity.id) {
-                    let match_score = self.calculate_match_score(&pref_keywords, skills, &activity.title, activity.description.as_deref());
+                    let match_score = self.calculate_match_score(
+                        &pref_keywords,
+                        skills,
+                        &activity.title,
+                        activity.description.as_deref(),
+                    );
                     if match_score > 0.3 {
                         supporting.push(activity.id.clone());
                         best_confidence = best_confidence.max(match_score);
@@ -210,7 +225,7 @@ impl JobMatcher {
             .collect();
 
         activity_scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-        recommended_activities = activity_scores
+        let recommended_activities = activity_scores
             .into_iter()
             .take(5)
             .filter(|(_, score)| *score > 0.0)
@@ -248,7 +263,53 @@ impl JobMatcher {
     }
 
     fn extract_keywords(&self, text: &str) -> Vec<String> {
-        let stop_words = ["and", "or", "the", "a", "an", "in", "of", "to", "for", "with", "on", "at", "by", "as", "is", "are", "be", "was", "were", "have", "has", "had", "do", "does", "did", "will", "would", "could", "should", "may", "might", "must", "can", "need", "years", "year", "experience", "knowledge", "ability", "understanding", "strong", "excellent", "good", "proven", "demonstrated"];
+        let stop_words = [
+            "and",
+            "or",
+            "the",
+            "a",
+            "an",
+            "in",
+            "of",
+            "to",
+            "for",
+            "with",
+            "on",
+            "at",
+            "by",
+            "as",
+            "is",
+            "are",
+            "be",
+            "was",
+            "were",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "must",
+            "can",
+            "need",
+            "years",
+            "year",
+            "experience",
+            "knowledge",
+            "ability",
+            "understanding",
+            "strong",
+            "excellent",
+            "good",
+            "proven",
+            "demonstrated",
+        ];
 
         text.to_lowercase()
             .split(|c: char| !c.is_alphanumeric())
@@ -274,7 +335,10 @@ impl JobMatcher {
 
         let mut matches = 0;
         for keyword in keywords {
-            if skills_lower.iter().any(|s| s.contains(keyword) || keyword.contains(s.as_str())) {
+            if skills_lower
+                .iter()
+                .any(|s| s.contains(keyword) || keyword.contains(s.as_str()))
+            {
                 matches += 2;
             } else if title_lower.contains(keyword) || desc_lower.contains(keyword) {
                 matches += 1;
@@ -300,7 +364,10 @@ impl JobMatcher {
             _ => "Weak Match",
         };
 
-        md.push_str(&format!("## Overall Score: {}% ({})\n\n", score_percentage, score_label));
+        md.push_str(&format!(
+            "## Overall Score: {}% ({})\n\n",
+            score_percentage, score_label
+        ));
 
         // Requirements matched
         md.push_str("## Requirements\n\n");
@@ -308,10 +375,13 @@ impl JobMatcher {
             let status = if req.matched { "✅" } else { "❌" };
             md.push_str(&format!("{} {}\n", status, req.requirement));
             if req.matched && !req.supporting_activities.is_empty() {
-                md.push_str(&format!("   - Confidence: {:.0}%\n", req.confidence * 100.0));
+                md.push_str(&format!(
+                    "   - Confidence: {:.0}%\n",
+                    req.confidence * 100.0
+                ));
             }
         }
-        md.push_str("\n");
+        md.push('\n');
 
         // Preferred qualifications
         if !result.matched_preferred.is_empty() {
@@ -320,7 +390,7 @@ impl JobMatcher {
                 let status = if pref.matched { "✅" } else { "⬜" };
                 md.push_str(&format!("{} {}\n", status, pref.requirement));
             }
-            md.push_str("\n");
+            md.push('\n');
         }
 
         // Gaps
@@ -329,7 +399,7 @@ impl JobMatcher {
             for gap in &result.gaps {
                 md.push_str(&format!("- {}\n", gap));
             }
-            md.push_str("\n");
+            md.push('\n');
         }
 
         // Talking points

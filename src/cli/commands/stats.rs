@@ -46,13 +46,12 @@ pub fn run() -> Result<()> {
     println!("  {} {}", "Low:".dimmed(), low);
 
     // Count by source
-    let by_source = activities.iter().fold(
-        std::collections::HashMap::new(),
-        |mut acc, a| {
+    let by_source = activities
+        .iter()
+        .fold(std::collections::HashMap::new(), |mut acc, a| {
             *acc.entry(a.source.to_string()).or_insert(0) += 1;
             acc
-        },
-    );
+        });
 
     println!();
     println!("{}", "By source:".cyan());
@@ -61,14 +60,14 @@ pub fn run() -> Result<()> {
     }
 
     // Count by project
-    let by_project: std::collections::HashMap<String, i32> = activities.iter().fold(
-        std::collections::HashMap::new(),
-        |mut acc, a| {
-            let project = a.project.clone().unwrap_or_else(|| "(none)".to_string());
-            *acc.entry(project).or_insert(0) += 1;
-            acc
-        },
-    );
+    let by_project: std::collections::HashMap<String, i32> =
+        activities
+            .iter()
+            .fold(std::collections::HashMap::new(), |mut acc, a| {
+                let project = a.project.clone().unwrap_or_else(|| "(none)".to_string());
+                *acc.entry(project).or_insert(0) += 1;
+                acc
+            });
 
     if by_project.len() > 1 || !by_project.contains_key("(none)") {
         println!();

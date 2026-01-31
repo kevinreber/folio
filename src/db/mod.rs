@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use rusqlite::{params, Connection};
 use std::path::PathBuf;
 
-use crate::types::{Activity, ActivitySource, ActivityType, Importance, Accomplishment, Metric};
+use crate::types::{Accomplishment, Activity, ActivitySource, ActivityType, Importance};
 
 const SCHEMA_VERSION: i32 = 1;
 
@@ -312,15 +312,14 @@ impl Database {
 
         // Build dynamic update query
         let mut updates = vec!["updated_at = ?1"];
-        let mut param_idx = 2;
 
         if title.is_some() {
             updates.push("title = ?2");
-            param_idx = 3;
         }
 
         // Get current activity to preserve metadata
-        let current = self.get_activity(id)?
+        let current = self
+            .get_activity(id)?
             .or_else(|| self.get_activity_by_partial_id(id).ok().flatten())
             .context("Activity not found")?;
 
@@ -359,7 +358,7 @@ impl Database {
 
     /// Check if an activity exists by metadata field
     pub fn activity_exists_by_metadata(&self, key: &str, value: &str) -> Result<bool> {
-        let pattern = format!("%\"{}\":\"{}\"%" , key, value);
+        let pattern = format!("%\"{}\":\"{}\"%", key, value);
         let count: i64 = self.conn.query_row(
             "SELECT COUNT(*) FROM activities WHERE metadata LIKE ?1",
             params![pattern],
@@ -418,7 +417,7 @@ impl Database {
                     metrics, skills, themes, employer, role,
                     start_date, end_date, generated_bullets, generated_story,
                     created_at, updated_at
-             FROM accomplishments ORDER BY created_at DESC"
+             FROM accomplishments ORDER BY created_at DESC",
         )?;
 
         let accomplishments = stmt
@@ -432,17 +431,16 @@ impl Database {
                     task: row.get(3)?,
                     action: row.get(4)?,
                     result: row.get(5)?,
-                    metrics: serde_json::from_str(&row.get::<_, String>(6)?)
-                        .unwrap_or_default(),
-                    skills: serde_json::from_str(&row.get::<_, String>(7)?)
-                        .unwrap_or_default(),
-                    themes: serde_json::from_str(&row.get::<_, String>(8)?)
-                        .unwrap_or_default(),
+                    metrics: serde_json::from_str(&row.get::<_, String>(6)?).unwrap_or_default(),
+                    skills: serde_json::from_str(&row.get::<_, String>(7)?).unwrap_or_default(),
+                    themes: serde_json::from_str(&row.get::<_, String>(8)?).unwrap_or_default(),
                     employer: row.get(9)?,
                     role: row.get(10)?,
-                    start_date: row.get::<_, Option<String>>(11)?
+                    start_date: row
+                        .get::<_, Option<String>>(11)?
                         .map(|s| parse_datetime(&s)),
-                    end_date: row.get::<_, Option<String>>(12)?
+                    end_date: row
+                        .get::<_, Option<String>>(12)?
                         .map(|s| parse_datetime(&s)),
                     generated_bullets: serde_json::from_str(&row.get::<_, String>(13)?)
                         .unwrap_or_default(),
@@ -464,7 +462,7 @@ impl Database {
                     metrics, skills, themes, employer, role,
                     start_date, end_date, generated_bullets, generated_story,
                     created_at, updated_at
-             FROM accomplishments WHERE id = ?1 OR id LIKE ?1 || '%' LIMIT 1"
+             FROM accomplishments WHERE id = ?1 OR id LIKE ?1 || '%' LIMIT 1",
         )?;
 
         let mut rows = stmt.query(params![id])?;
@@ -485,17 +483,16 @@ impl Database {
                 task: row.get(3)?,
                 action: row.get(4)?,
                 result: row.get(5)?,
-                metrics: serde_json::from_str(&row.get::<_, String>(6)?)
-                    .unwrap_or_default(),
-                skills: serde_json::from_str(&row.get::<_, String>(7)?)
-                    .unwrap_or_default(),
-                themes: serde_json::from_str(&row.get::<_, String>(8)?)
-                    .unwrap_or_default(),
+                metrics: serde_json::from_str(&row.get::<_, String>(6)?).unwrap_or_default(),
+                skills: serde_json::from_str(&row.get::<_, String>(7)?).unwrap_or_default(),
+                themes: serde_json::from_str(&row.get::<_, String>(8)?).unwrap_or_default(),
                 employer: row.get(9)?,
                 role: row.get(10)?,
-                start_date: row.get::<_, Option<String>>(11)?
+                start_date: row
+                    .get::<_, Option<String>>(11)?
                     .map(|s| parse_datetime(&s)),
-                end_date: row.get::<_, Option<String>>(12)?
+                end_date: row
+                    .get::<_, Option<String>>(12)?
                     .map(|s| parse_datetime(&s)),
                 generated_bullets: serde_json::from_str(&row.get::<_, String>(13)?)
                     .unwrap_or_default(),
@@ -519,7 +516,7 @@ impl Database {
              FROM activities
              WHERE title LIKE ?1 OR description LIKE ?1 OR project LIKE ?1
              ORDER BY timestamp DESC
-             LIMIT ?2"
+             LIMIT ?2",
         )?;
 
         let activities = stmt

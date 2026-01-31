@@ -1,12 +1,17 @@
 use anyhow::Result;
 use colored::Colorize;
-use fuzzy_matcher::FuzzyMatcher;
 use fuzzy_matcher::skim::SkimMatcherV2;
+use fuzzy_matcher::FuzzyMatcher;
 
 use crate::db::Database;
 use crate::types::Importance;
 
-pub fn run(query: String, limit: u32, project: Option<String>, importance: Option<String>) -> Result<()> {
+pub fn run(
+    query: String,
+    limit: u32,
+    project: Option<String>,
+    importance: Option<String>,
+) -> Result<()> {
     let db = Database::open()?;
     let activities = db.list_activities(None)?;
 
@@ -24,7 +29,12 @@ pub fn run(query: String, limit: u32, project: Option<String>, importance: Optio
         .filter_map(|a| {
             // Apply project filter
             if let Some(ref p) = project {
-                if !a.project.as_ref().map(|ap| ap.to_lowercase().contains(&p.to_lowercase())).unwrap_or(false) {
+                if !a
+                    .project
+                    .as_ref()
+                    .map(|ap| ap.to_lowercase().contains(&p.to_lowercase()))
+                    .unwrap_or(false)
+                {
                     return None;
                 }
             }
@@ -39,10 +49,14 @@ pub fn run(query: String, limit: u32, project: Option<String>, importance: Optio
 
             // Calculate fuzzy match score
             let title_score = matcher.fuzzy_match(&a.title, &query).unwrap_or(0);
-            let desc_score = a.description.as_ref()
+            let desc_score = a
+                .description
+                .as_ref()
                 .and_then(|d| matcher.fuzzy_match(d, &query))
                 .unwrap_or(0);
-            let project_score = a.project.as_ref()
+            let project_score = a
+                .project
+                .as_ref()
                 .and_then(|p| matcher.fuzzy_match(p, &query))
                 .unwrap_or(0);
 
@@ -50,11 +64,24 @@ pub fn run(query: String, limit: u32, project: Option<String>, importance: Optio
 
             // Also check for exact substring matches
             let has_match = a.title.to_lowercase().contains(&query_lower)
-                || a.description.as_ref().map(|d| d.to_lowercase().contains(&query_lower)).unwrap_or(false)
-                || a.project.as_ref().map(|p| p.to_lowercase().contains(&query_lower)).unwrap_or(false);
+                || a.description
+                    .as_ref()
+                    .map(|d| d.to_lowercase().contains(&query_lower))
+                    .unwrap_or(false)
+                || a.project
+                    .as_ref()
+                    .map(|p| p.to_lowercase().contains(&query_lower))
+                    .unwrap_or(false);
 
             if total_score > 0 || has_match {
-                Some((a, if has_match { total_score + 100 } else { total_score }))
+                Some((
+                    a,
+                    if has_match {
+                        total_score + 100
+                    } else {
+                        total_score
+                    },
+                ))
             } else {
                 None
             }
@@ -72,14 +99,15 @@ pub fn run(query: String, limit: u32, project: Option<String>, importance: Optio
         return Ok(());
     }
 
-    println!("{} {} {}",
+    println!(
+        "{} {} {}",
         "Found".green().bold(),
         results.len(),
         format!("results for '{}':", query).green()
     );
     println!();
 
-    for (activity, score) in &results {
+    for (activity, _score) in &results {
         let importance_marker = match activity.importance {
             Importance::High => "●".red(),
             Importance::Medium => "●".yellow(),

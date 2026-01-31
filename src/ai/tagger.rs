@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 use crate::types::{Activity, Importance};
 
@@ -42,11 +42,34 @@ impl AutoTagger {
 
         // Programming Languages
         patterns.insert("Rust".to_string(), s(&["rust", "cargo", ".rs", "rustc"]));
-        patterns.insert("Python".to_string(), s(&["python", "pip", "pytest", "django", "flask", "fastapi", ".py"]));
-        patterns.insert("JavaScript".to_string(), s(&["javascript", "js", "node", "npm", "yarn", "react", "vue", "angular"]));
-        patterns.insert("TypeScript".to_string(), s(&["typescript", "ts", ".tsx", ".ts"]));
+        patterns.insert(
+            "Python".to_string(),
+            s(&[
+                "python", "pip", "pytest", "django", "flask", "fastapi", ".py",
+            ]),
+        );
+        patterns.insert(
+            "JavaScript".to_string(),
+            s(&[
+                "javascript",
+                "js",
+                "node",
+                "npm",
+                "yarn",
+                "react",
+                "vue",
+                "angular",
+            ]),
+        );
+        patterns.insert(
+            "TypeScript".to_string(),
+            s(&["typescript", "ts", ".tsx", ".ts"]),
+        );
         patterns.insert("Go".to_string(), s(&["golang", " go ", "go mod", ".go"]));
-        patterns.insert("Java".to_string(), s(&["java", "maven", "gradle", "spring", ".java"]));
+        patterns.insert(
+            "Java".to_string(),
+            s(&["java", "maven", "gradle", "spring", ".java"]),
+        );
         patterns.insert("C++".to_string(), s(&["c++", "cpp", ".cpp", ".hpp"]));
         patterns.insert("Ruby".to_string(), s(&["ruby", "rails", "gem", ".rb"]));
         patterns.insert("PHP".to_string(), s(&["php", "laravel", "symfony", ".php"]));
@@ -54,38 +77,77 @@ impl AutoTagger {
         patterns.insert("Kotlin".to_string(), s(&["kotlin", "android", ".kt"]));
 
         // Frameworks & Libraries
-        patterns.insert("React".to_string(), s(&["react", "jsx", "redux", "next.js", "nextjs"]));
+        patterns.insert(
+            "React".to_string(),
+            s(&["react", "jsx", "redux", "next.js", "nextjs"]),
+        );
         patterns.insert("Vue".to_string(), s(&["vue", "vuex", "nuxt"]));
         patterns.insert("Angular".to_string(), s(&["angular", "rxjs", "ngrx"]));
         patterns.insert("Django".to_string(), s(&["django"]));
         patterns.insert("Flask".to_string(), s(&["flask"]));
         patterns.insert("FastAPI".to_string(), s(&["fastapi"]));
         patterns.insert("Express".to_string(), s(&["express", "expressjs"]));
-        patterns.insert("Spring".to_string(), s(&["spring", "springboot", "spring boot"]));
+        patterns.insert(
+            "Spring".to_string(),
+            s(&["spring", "springboot", "spring boot"]),
+        );
 
         // Databases
-        patterns.insert("PostgreSQL".to_string(), s(&["postgres", "postgresql", "psql"]));
+        patterns.insert(
+            "PostgreSQL".to_string(),
+            s(&["postgres", "postgresql", "psql"]),
+        );
         patterns.insert("MySQL".to_string(), s(&["mysql", "mariadb"]));
         patterns.insert("MongoDB".to_string(), s(&["mongodb", "mongo"]));
         patterns.insert("Redis".to_string(), s(&["redis"]));
-        patterns.insert("Elasticsearch".to_string(), s(&["elasticsearch", "elastic"]));
+        patterns.insert(
+            "Elasticsearch".to_string(),
+            s(&["elasticsearch", "elastic"]),
+        );
         patterns.insert("DynamoDB".to_string(), s(&["dynamodb"]));
         patterns.insert("SQLite".to_string(), s(&["sqlite"]));
 
         // Cloud & Infrastructure
-        patterns.insert("AWS".to_string(), s(&["aws", "amazon web services", "ec2", "s3", "lambda"]));
+        patterns.insert(
+            "AWS".to_string(),
+            s(&["aws", "amazon web services", "ec2", "s3", "lambda"]),
+        );
         patterns.insert("GCP".to_string(), s(&["gcp", "google cloud", "gke"]));
         patterns.insert("Azure".to_string(), s(&["azure", "microsoft cloud"]));
-        patterns.insert("Docker".to_string(), s(&["docker", "container", "dockerfile"]));
-        patterns.insert("Kubernetes".to_string(), s(&["kubernetes", "k8s", "kubectl", "helm"]));
+        patterns.insert(
+            "Docker".to_string(),
+            s(&["docker", "container", "dockerfile"]),
+        );
+        patterns.insert(
+            "Kubernetes".to_string(),
+            s(&["kubernetes", "k8s", "kubectl", "helm"]),
+        );
         patterns.insert("Terraform".to_string(), s(&["terraform", "tf"]));
-        patterns.insert("CI/CD".to_string(), s(&["ci/cd", "github actions", "jenkins", "gitlab ci", "circleci"]));
+        patterns.insert(
+            "CI/CD".to_string(),
+            s(&[
+                "ci/cd",
+                "github actions",
+                "jenkins",
+                "gitlab ci",
+                "circleci",
+            ]),
+        );
 
         // Tools
-        patterns.insert("Git".to_string(), s(&["git", "github", "gitlab", "bitbucket"]));
-        patterns.insert("Linux".to_string(), s(&["linux", "ubuntu", "debian", "centos"]));
+        patterns.insert(
+            "Git".to_string(),
+            s(&["git", "github", "gitlab", "bitbucket"]),
+        );
+        patterns.insert(
+            "Linux".to_string(),
+            s(&["linux", "ubuntu", "debian", "centos"]),
+        );
         patterns.insert("GraphQL".to_string(), s(&["graphql", "apollo"]));
-        patterns.insert("REST API".to_string(), s(&["rest api", "restful", "api endpoint"]));
+        patterns.insert(
+            "REST API".to_string(),
+            s(&["rest api", "restful", "api endpoint"]),
+        );
         patterns.insert("gRPC".to_string(), s(&["grpc", "protobuf"]));
         patterns.insert("Kafka".to_string(), s(&["kafka"]));
         patterns.insert("RabbitMQ".to_string(), s(&["rabbitmq"]));
@@ -101,20 +163,85 @@ impl AutoTagger {
             strs.iter().map(|s| s.to_string()).collect()
         }
 
-        patterns.insert("Backend".to_string(), s(&["backend", "server", "api", "microservice", "database"]));
-        patterns.insert("Frontend".to_string(), s(&["frontend", "ui", "ux", "component", "css", "html"]));
-        patterns.insert("Full-Stack".to_string(), s(&["full-stack", "fullstack", "end-to-end"]));
-        patterns.insert("DevOps".to_string(), s(&["devops", "infrastructure", "deploy", "ci/cd", "monitoring"]));
-        patterns.insert("Data Engineering".to_string(), s(&["data pipeline", "etl", "data warehouse", "bigquery"]));
-        patterns.insert("Machine Learning".to_string(), s(&["machine learning", "ml", "model", "training", "ai"]));
-        patterns.insert("Security".to_string(), s(&["security", "authentication", "authorization", "vulnerability", "encryption"]));
-        patterns.insert("Performance".to_string(), s(&["performance", "optimization", "latency", "throughput", "caching"]));
-        patterns.insert("Scalability".to_string(), s(&["scalability", "scale", "distributed", "horizontal"]));
-        patterns.insert("Testing".to_string(), s(&["testing", "test", "qa", "unit test", "integration test"]));
-        patterns.insert("Documentation".to_string(), s(&["documentation", "docs", "readme", "wiki", "spec"]));
-        patterns.insert("Architecture".to_string(), s(&["architecture", "design", "system design", "technical design"]));
-        patterns.insert("Mobile".to_string(), s(&["mobile", "ios", "android", "react native", "flutter"]));
-        patterns.insert("Observability".to_string(), s(&["observability", "monitoring", "logging", "tracing", "metrics"]));
+        patterns.insert(
+            "Backend".to_string(),
+            s(&["backend", "server", "api", "microservice", "database"]),
+        );
+        patterns.insert(
+            "Frontend".to_string(),
+            s(&["frontend", "ui", "ux", "component", "css", "html"]),
+        );
+        patterns.insert(
+            "Full-Stack".to_string(),
+            s(&["full-stack", "fullstack", "end-to-end"]),
+        );
+        patterns.insert(
+            "DevOps".to_string(),
+            s(&["devops", "infrastructure", "deploy", "ci/cd", "monitoring"]),
+        );
+        patterns.insert(
+            "Data Engineering".to_string(),
+            s(&["data pipeline", "etl", "data warehouse", "bigquery"]),
+        );
+        patterns.insert(
+            "Machine Learning".to_string(),
+            s(&["machine learning", "ml", "model", "training", "ai"]),
+        );
+        patterns.insert(
+            "Security".to_string(),
+            s(&[
+                "security",
+                "authentication",
+                "authorization",
+                "vulnerability",
+                "encryption",
+            ]),
+        );
+        patterns.insert(
+            "Performance".to_string(),
+            s(&[
+                "performance",
+                "optimization",
+                "latency",
+                "throughput",
+                "caching",
+            ]),
+        );
+        patterns.insert(
+            "Scalability".to_string(),
+            s(&["scalability", "scale", "distributed", "horizontal"]),
+        );
+        patterns.insert(
+            "Testing".to_string(),
+            s(&["testing", "test", "qa", "unit test", "integration test"]),
+        );
+        patterns.insert(
+            "Documentation".to_string(),
+            s(&["documentation", "docs", "readme", "wiki", "spec"]),
+        );
+        patterns.insert(
+            "Architecture".to_string(),
+            s(&[
+                "architecture",
+                "design",
+                "system design",
+                "technical design",
+            ]),
+        );
+        patterns.insert(
+            "Mobile".to_string(),
+            s(&["mobile", "ios", "android", "react native", "flutter"]),
+        );
+        patterns.insert(
+            "Observability".to_string(),
+            s(&[
+                "observability",
+                "monitoring",
+                "logging",
+                "tracing",
+                "metrics",
+            ]),
+        );
 
         patterns
     }
@@ -232,13 +359,58 @@ impl AutoTagger {
         let mut found = Vec::new();
 
         let soft_skill_patterns = [
-            ("Leadership", vec!["led", "managed", "directed", "coordinated", "mentored"]),
-            ("Communication", vec!["presented", "communicated", "documented", "explained", "trained"]),
-            ("Problem Solving", vec!["solved", "debugged", "investigated", "diagnosed", "troubleshot"]),
-            ("Collaboration", vec!["collaborated", "partnered", "worked with", "coordinated", "aligned"]),
-            ("Initiative", vec!["initiated", "proposed", "pioneered", "introduced", "championed"]),
-            ("Time Management", vec!["deadline", "on time", "prioritized", "scheduled"]),
-            ("Adaptability", vec!["adapted", "pivoted", "learned", "transitioned"]),
+            (
+                "Leadership",
+                vec!["led", "managed", "directed", "coordinated", "mentored"],
+            ),
+            (
+                "Communication",
+                vec![
+                    "presented",
+                    "communicated",
+                    "documented",
+                    "explained",
+                    "trained",
+                ],
+            ),
+            (
+                "Problem Solving",
+                vec![
+                    "solved",
+                    "debugged",
+                    "investigated",
+                    "diagnosed",
+                    "troubleshot",
+                ],
+            ),
+            (
+                "Collaboration",
+                vec![
+                    "collaborated",
+                    "partnered",
+                    "worked with",
+                    "coordinated",
+                    "aligned",
+                ],
+            ),
+            (
+                "Initiative",
+                vec![
+                    "initiated",
+                    "proposed",
+                    "pioneered",
+                    "introduced",
+                    "championed",
+                ],
+            ),
+            (
+                "Time Management",
+                vec!["deadline", "on time", "prioritized", "scheduled"],
+            ),
+            (
+                "Adaptability",
+                vec!["adapted", "pivoted", "learned", "transitioned"],
+            ),
         ];
 
         for (skill, patterns) in soft_skill_patterns {
@@ -250,13 +422,25 @@ impl AutoTagger {
         found
     }
 
-    fn suggest_importance(&self, activity: &Activity, skills: &[String], themes: &[String]) -> Importance {
+    fn suggest_importance(
+        &self,
+        activity: &Activity,
+        skills: &[String],
+        themes: &[String],
+    ) -> Importance {
         // Use existing importance as base
         let base = &activity.importance;
 
         // Boost for high-value indicators
         let title_lower = activity.title.to_lowercase();
-        let high_value_keywords = ["launch", "ship", "major", "critical", "security", "performance"];
+        let high_value_keywords = [
+            "launch",
+            "ship",
+            "major",
+            "critical",
+            "security",
+            "performance",
+        ];
         let low_value_keywords = ["typo", "minor", "small", "cleanup", "format"];
 
         if high_value_keywords.iter().any(|k| title_lower.contains(k)) {

@@ -1,3 +1,6 @@
+// Allow dead code for APIs that are defined but not yet fully wired up
+#![allow(dead_code)]
+
 mod ai;
 mod cli;
 mod config;

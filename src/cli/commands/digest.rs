@@ -1,8 +1,8 @@
 use anyhow::Result;
 use colored::Colorize;
 
+use crate::ai::{digest::DigestPeriod, DigestGenerator};
 use crate::db::Database;
-use crate::ai::{DigestGenerator, digest::DigestPeriod};
 
 pub fn run(period: String, markdown: bool) -> Result<()> {
     let db = Database::open()?;
@@ -10,7 +10,10 @@ pub fn run(period: String, markdown: bool) -> Result<()> {
 
     if activities.is_empty() {
         println!("{}", "No activities to generate digest from.".dimmed());
-        println!("{}", "Capture some activities first with `folio capture`".dimmed());
+        println!(
+            "{}",
+            "Capture some activities first with `folio capture`".dimmed()
+        );
         return Ok(());
     }
 
@@ -58,7 +61,11 @@ pub fn run(period: String, markdown: bool) -> Result<()> {
 
         // Stats
         println!("{}", "Statistics".yellow().bold());
-        println!("  {} {}", "Total activities:".dimmed(), digest.stats.total_activities);
+        println!(
+            "  {} {}",
+            "Total activities:".dimmed(),
+            digest.stats.total_activities
+        );
         println!(
             "  {} {} high, {} medium, {} low",
             "By importance:".dimmed(),
@@ -66,7 +73,11 @@ pub fn run(period: String, markdown: bool) -> Result<()> {
             digest.stats.medium_importance.to_string().yellow(),
             digest.stats.low_importance.to_string().dimmed()
         );
-        println!("  {} {}", "Projects touched:".dimmed(), digest.stats.projects_touched);
+        println!(
+            "  {} {}",
+            "Projects touched:".dimmed(),
+            digest.stats.projects_touched
+        );
         println!();
 
         // Highlights

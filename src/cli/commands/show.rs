@@ -70,7 +70,11 @@ fn print_activity_detail(activity: &Activity) {
     {
         println!();
         println!("{}", "Metadata:".cyan());
-        for (key, value) in activity.metadata.as_object().unwrap_or(&serde_json::Map::new()) {
+        for (key, value) in activity
+            .metadata
+            .as_object()
+            .unwrap_or(&serde_json::Map::new())
+        {
             if key != "impact" {
                 println!("  {}: {}", key, value);
             }

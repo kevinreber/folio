@@ -12,8 +12,7 @@ pub fn export(data: &ExportData) -> Result<String> {
 
 /// Export data to compact JSON (single line)
 pub fn export_compact(data: &ExportData) -> Result<String> {
-    serde_json::to_string(data)
-        .map_err(|e| anyhow::anyhow!("Failed to serialize to JSON: {}", e))
+    serde_json::to_string(data).map_err(|e| anyhow::anyhow!("Failed to serialize to JSON: {}", e))
 }
 
 /// Export only activities to JSON

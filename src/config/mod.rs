@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 /// Application configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     /// General settings
     pub general: GeneralConfig,
@@ -131,21 +131,6 @@ pub struct WatcherConfig {
     pub notify_threshold: f32,
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            general: GeneralConfig::default(),
-            git: GitConfig::default(),
-            github: GitHubConfig::default(),
-            linear: LinearConfig::default(),
-            jira: JiraConfig::default(),
-            ai: AiConfig::default(),
-            export: ExportConfig::default(),
-            watcher: WatcherConfig::default(),
-        }
-    }
-}
-
 impl Default for GeneralConfig {
     fn default() -> Self {
         Self {
@@ -270,8 +255,7 @@ impl Config {
         let content = std::fs::read_to_string(&path)
             .with_context(|| format!("Failed to read config file: {:?}", path))?;
 
-        toml::from_str(&content)
-            .with_context(|| format!("Failed to parse config file: {:?}", path))
+        toml::from_str(&content).with_context(|| format!("Failed to parse config file: {:?}", path))
     }
 
     /// Save configuration to file
@@ -283,8 +267,7 @@ impl Config {
             std::fs::create_dir_all(parent)?;
         }
 
-        let content = toml::to_string_pretty(self)
-            .context("Failed to serialize config")?;
+        let content = toml::to_string_pretty(self).context("Failed to serialize config")?;
 
         std::fs::write(&path, content)
             .with_context(|| format!("Failed to write config file: {:?}", path))?;
@@ -325,13 +308,25 @@ impl Config {
 
         match parts.as_slice() {
             ["general", "default_employer"] => {
-                self.general.default_employer = if value.is_empty() { None } else { Some(value.to_string()) };
+                self.general.default_employer = if value.is_empty() {
+                    None
+                } else {
+                    Some(value.to_string())
+                };
             }
             ["general", "default_project"] => {
-                self.general.default_project = if value.is_empty() { None } else { Some(value.to_string()) };
+                self.general.default_project = if value.is_empty() {
+                    None
+                } else {
+                    Some(value.to_string())
+                };
             }
             ["general", "git_email"] => {
-                self.general.git_email = if value.is_empty() { None } else { Some(value.to_string()) };
+                self.general.git_email = if value.is_empty() {
+                    None
+                } else {
+                    Some(value.to_string())
+                };
             }
             ["general", "color"] => {
                 self.general.color = value.parse().unwrap_or(true);
@@ -349,7 +344,11 @@ impl Config {
                 self.github.enabled = value.parse().unwrap_or(false);
             }
             ["github", "token"] => {
-                self.github.token = if value.is_empty() { None } else { Some(value.to_string()) };
+                self.github.token = if value.is_empty() {
+                    None
+                } else {
+                    Some(value.to_string())
+                };
             }
             ["github", "days_back"] => {
                 self.github.days_back = value.parse().unwrap_or(30);
@@ -358,7 +357,11 @@ impl Config {
                 self.linear.enabled = value.parse().unwrap_or(false);
             }
             ["linear", "api_key"] => {
-                self.linear.api_key = if value.is_empty() { None } else { Some(value.to_string()) };
+                self.linear.api_key = if value.is_empty() {
+                    None
+                } else {
+                    Some(value.to_string())
+                };
             }
             ["ai", "enabled"] => {
                 self.ai.enabled = value.parse().unwrap_or(false);
@@ -370,7 +373,11 @@ impl Config {
                 self.ai.model = value.to_string();
             }
             ["ai", "api_key"] => {
-                self.ai.api_key = if value.is_empty() { None } else { Some(value.to_string()) };
+                self.ai.api_key = if value.is_empty() {
+                    None
+                } else {
+                    Some(value.to_string())
+                };
             }
             ["watcher", "enabled"] => {
                 self.watcher.enabled = value.parse().unwrap_or(false);

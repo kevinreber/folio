@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use chrono::{DateTime, TimeZone, Utc};
-use git2::{Commit, Repository, Signature};
+use git2::{Commit, Repository};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -63,7 +63,9 @@ impl GitScanner {
                 let path = entry.path();
                 if path.ends_with(".git") && path.is_dir() {
                     if let Some(parent) = path.parent() {
-                        let canonical = parent.canonicalize().unwrap_or_else(|_| parent.to_path_buf());
+                        let canonical = parent
+                            .canonicalize()
+                            .unwrap_or_else(|_| parent.to_path_buf());
                         if !seen.contains(&canonical) {
                             seen.insert(canonical.clone());
                             repos.push(canonical);
@@ -188,7 +190,7 @@ impl GitScanner {
         // Determine importance based on commit message and stats
         let importance = self.infer_importance(&message, &stats);
 
-        let mut activity = Activity {
+        let activity = Activity {
             id: uuid::Uuid::new_v4().to_string(),
             source: ActivitySource::Git,
             activity_type: ActivityType::Commit,
@@ -258,7 +260,11 @@ struct CommitStats {
 }
 
 /// Scan a specific git repository
-pub fn scan_repo(path: &Path, days_back: u32, author_email: Option<String>) -> Result<Vec<Activity>> {
+pub fn scan_repo(
+    path: &Path,
+    days_back: u32,
+    author_email: Option<String>,
+) -> Result<Vec<Activity>> {
     let config = GitScanConfig {
         scan_dirs: vec![path.to_path_buf()],
         days_back,

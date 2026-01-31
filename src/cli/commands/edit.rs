@@ -3,7 +3,6 @@ use colored::Colorize;
 use std::io::{self, Write};
 
 use crate::db::Database;
-use crate::types::Importance;
 
 pub fn run(
     id: String,
@@ -22,8 +21,11 @@ pub fn run(
         .with_context(|| format!("No activity found matching '{}'", id))?;
 
     // Check if any edits were provided
-    let has_edits = title.is_some() || impact.is_some() || project.is_some()
-        || employer.is_some() || importance.is_some();
+    let has_edits = title.is_some()
+        || impact.is_some()
+        || project.is_some()
+        || employer.is_some()
+        || importance.is_some();
 
     if !has_edits {
         // Interactive edit mode
@@ -32,8 +34,10 @@ pub fn run(
         println!("Current values (press Enter to keep, or type new value):\n");
 
         let new_title = prompt_edit("Title", &activity.title)?;
-        let new_impact = prompt_edit_optional("Impact",
-            activity.metadata.get("impact").and_then(|v| v.as_str()))?;
+        let new_impact = prompt_edit_optional(
+            "Impact",
+            activity.metadata.get("impact").and_then(|v| v.as_str()),
+        )?;
         let new_project = prompt_edit_optional("Project", activity.project.as_deref())?;
         let new_employer = prompt_edit_optional("Employer", activity.employer.as_deref())?;
         let new_importance = prompt_edit("Importance", &activity.importance.to_string())?;
@@ -49,7 +53,11 @@ pub fn run(
         )?;
 
         println!();
-        println!("{} Updated activity {}", "✓".green().bold(), &activity.id[..8]);
+        println!(
+            "{} Updated activity {}",
+            "✓".green().bold(),
+            &activity.id[..8]
+        );
     } else {
         // Direct edit with provided values
         db.update_activity(
@@ -61,7 +69,11 @@ pub fn run(
             importance.as_deref(),
         )?;
 
-        println!("{} Updated activity {}", "✓".green().bold(), &activity.id[..8]);
+        println!(
+            "{} Updated activity {}",
+            "✓".green().bold(),
+            &activity.id[..8]
+        );
 
         if let Some(t) = title {
             println!("  {} {}", "Title:".dimmed(), t);

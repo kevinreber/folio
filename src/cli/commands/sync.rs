@@ -4,15 +4,10 @@ use std::path::PathBuf;
 
 use crate::config::Config;
 use crate::db::Database;
-use crate::integrations::{GitScanner, GitHubClient, LinearClient, git::GitScanConfig};
+use crate::integrations::{git::GitScanConfig, GitHubClient, GitScanner, LinearClient};
 use crate::types::Activity;
 
-pub fn run(
-    source: Option<String>,
-    days: u32,
-    repo: Option<PathBuf>,
-    dry_run: bool,
-) -> Result<()> {
+pub fn run(source: Option<String>, days: u32, repo: Option<PathBuf>, dry_run: bool) -> Result<()> {
     let config = Config::load()?;
     let db = Database::open()?;
 
@@ -35,7 +30,10 @@ pub fn run(
             let count = sync_github(&config, &db, days, dry_run)?;
             total_imported += count;
         } else if source == "github" {
-            println!("{}", "GitHub not configured. Run `folio config github.token <token>`".yellow());
+            println!(
+                "{}",
+                "GitHub not configured. Run `folio config github.token <token>`".yellow()
+            );
         }
     }
 
@@ -44,7 +42,10 @@ pub fn run(
             let count = sync_linear(&config, &db, days, dry_run)?;
             total_imported += count;
         } else if source == "linear" {
-            println!("{}", "Linear not configured. Run `folio config linear.api_key <key>`".yellow());
+            println!(
+                "{}",
+                "Linear not configured. Run `folio config linear.api_key <key>`".yellow()
+            );
         }
     }
 
@@ -52,9 +53,17 @@ pub fn run(
     println!("{}", "─".repeat(50).dimmed());
 
     if dry_run {
-        println!("{} Would import {} activities (dry run)", "✓".yellow().bold(), total_imported);
+        println!(
+            "{} Would import {} activities (dry run)",
+            "✓".yellow().bold(),
+            total_imported
+        );
     } else {
-        println!("{} Imported {} activities", "✓".green().bold(), total_imported);
+        println!(
+            "{} Imported {} activities",
+            "✓".green().bold(),
+            total_imported
+        );
     }
 
     Ok(())
@@ -108,7 +117,9 @@ fn sync_git(
     let mut imported = 0;
     for activity in activities {
         // Check if already exists (by commit SHA)
-        let sha = activity.metadata.get("commit_sha")
+        let sha = activity
+            .metadata
+            .get("commit_sha")
             .and_then(|v| v.as_str())
             .unwrap_or("");
 
@@ -122,12 +133,7 @@ fn sync_git(
     Ok(imported)
 }
 
-fn sync_github(
-    config: &Config,
-    db: &Database,
-    days: u32,
-    dry_run: bool,
-) -> Result<usize> {
+fn sync_github(config: &Config, db: &Database, days: u32, dry_run: bool) -> Result<usize> {
     println!();
     println!("{}", "GitHub".yellow().bold());
 
@@ -181,7 +187,9 @@ fn sync_github(
     // Import new activities
     let mut imported = 0;
     for activity in all_activities {
-        let pr_number = activity.metadata.get("pr_number")
+        let pr_number = activity
+            .metadata
+            .get("pr_number")
             .and_then(|v| v.as_u64())
             .map(|n| n.to_string())
             .unwrap_or_default();
@@ -196,12 +204,7 @@ fn sync_github(
     Ok(imported)
 }
 
-fn sync_linear(
-    config: &Config,
-    db: &Database,
-    days: u32,
-    dry_run: bool,
-) -> Result<usize> {
+fn sync_linear(config: &Config, db: &Database, days: u32, dry_run: bool) -> Result<usize> {
     println!();
     println!("{}", "Linear".yellow().bold());
 
@@ -216,7 +219,8 @@ fn sync_linear(
     let issues = client.get_completed_issues(days)?;
     println!("  Found {} completed issues", issues.len());
 
-    let activities: Vec<Activity> = issues.iter()
+    let activities: Vec<Activity> = issues
+        .iter()
         .map(|issue| client.issue_to_activity(issue))
         .collect();
 
@@ -230,7 +234,9 @@ fn sync_linear(
     // Import new activities
     let mut imported = 0;
     for activity in activities {
-        let issue_id = activity.metadata.get("issue_id")
+        let issue_id = activity
+            .metadata
+            .get("issue_id")
             .and_then(|v| v.as_str())
             .unwrap_or("");
 

@@ -16,11 +16,11 @@ mod tui_cmd;
 mod watch;
 
 pub use capture::run as capture;
-pub use config_cmd::{run as config, init as config_init};
+pub use config_cmd::{init as config_init, run as config};
 pub use delete::run as delete;
-pub use digest::{run as digest, review as review};
+pub use digest::{review, run as digest};
 pub use edit::run as edit;
-pub use export_cmd::{run as export, import};
+pub use export_cmd::{import, run as export};
 pub use list::run as list;
 pub use match_cmd::run as match_job;
 pub use promote::run as promote;

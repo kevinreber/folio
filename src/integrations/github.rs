@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use reqwest::blocking::Client;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::types::{Activity, ActivitySource, ActivityType, Importance};
 
@@ -129,7 +129,12 @@ impl GitHubClient {
     }
 
     /// Fetch merged PRs for a repository
-    pub fn get_merged_prs(&self, owner: &str, repo: &str, days_back: u32) -> Result<Vec<GitHubPullRequest>> {
+    pub fn get_merged_prs(
+        &self,
+        owner: &str,
+        repo: &str,
+        days_back: u32,
+    ) -> Result<Vec<GitHubPullRequest>> {
         let since = Utc::now() - chrono::Duration::days(days_back as i64);
         let url = format!(
             "{}/repos/{}/{}/pulls?state=closed&sort=updated&direction=desc&per_page=100",
@@ -142,23 +147,27 @@ impl GitHubClient {
         // Filter to merged PRs within timeframe
         Ok(prs
             .into_iter()
-            .filter(|pr| {
-                pr.merged_at
-                    .map(|merged| merged > since)
-                    .unwrap_or(false)
-            })
+            .filter(|pr| pr.merged_at.map(|merged| merged > since).unwrap_or(false))
             .collect())
     }
 
     /// Fetch a single PR with full details
     pub fn get_pr(&self, owner: &str, repo: &str, number: u64) -> Result<GitHubPullRequest> {
-        let url = format!("{}/repos/{}/{}/pulls/{}", GITHUB_API_BASE, owner, repo, number);
+        let url = format!(
+            "{}/repos/{}/{}/pulls/{}",
+            GITHUB_API_BASE, owner, repo, number
+        );
         let resp = self.request(&url)?;
         resp.json().context("Failed to parse PR response")
     }
 
     /// Fetch issues closed by the user
-    pub fn get_closed_issues(&self, owner: &str, repo: &str, days_back: u32) -> Result<Vec<GitHubIssue>> {
+    pub fn get_closed_issues(
+        &self,
+        owner: &str,
+        repo: &str,
+        days_back: u32,
+    ) -> Result<Vec<GitHubIssue>> {
         let since = Utc::now() - chrono::Duration::days(days_back as i64);
         let url = format!(
             "{}/repos/{}/{}/issues?state=closed&sort=updated&direction=desc&per_page=100",
@@ -171,7 +180,8 @@ impl GitHubClient {
         Ok(issues
             .into_iter()
             .filter(|issue| {
-                issue.closed_at
+                issue
+                    .closed_at
                     .map(|closed| closed > since)
                     .unwrap_or(false)
             })
@@ -186,7 +196,12 @@ impl GitHubClient {
     }
 
     /// Fetch reviews submitted by user
-    pub fn get_user_reviews(&self, owner: &str, repo: &str, pr_number: u64) -> Result<Vec<GitHubReview>> {
+    pub fn get_user_reviews(
+        &self,
+        owner: &str,
+        repo: &str,
+        pr_number: u64,
+    ) -> Result<Vec<GitHubReview>> {
         let url = format!(
             "{}/repos/{}/{}/pulls/{}/reviews",
             GITHUB_API_BASE, owner, repo, pr_number
@@ -273,11 +288,17 @@ impl GitHubClient {
     fn infer_issue_importance(&self, issue: &GitHubIssue) -> Importance {
         let labels: Vec<&str> = issue.labels.iter().map(|l| l.name.as_str()).collect();
 
-        if labels.iter().any(|l| l.contains("critical") || l.contains("security") || l.contains("bug")) {
+        if labels
+            .iter()
+            .any(|l| l.contains("critical") || l.contains("security") || l.contains("bug"))
+        {
             return Importance::High;
         }
 
-        if labels.iter().any(|l| l.contains("enhancement") || l.contains("feature")) {
+        if labels
+            .iter()
+            .any(|l| l.contains("enhancement") || l.contains("feature"))
+        {
             return Importance::Medium;
         }
 

@@ -5,8 +5,7 @@ use crate::types::Activity;
 
 /// Export data to YAML format
 pub fn export(data: &ExportData) -> Result<String> {
-    serde_yaml::to_string(data)
-        .map_err(|e| anyhow::anyhow!("Failed to serialize to YAML: {}", e))
+    serde_yaml::to_string(data).map_err(|e| anyhow::anyhow!("Failed to serialize to YAML: {}", e))
 }
 
 /// Export only activities to YAML

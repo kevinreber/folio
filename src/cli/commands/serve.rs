@@ -13,7 +13,10 @@ pub fn run_api(host: String, port: u16) -> Result<()> {
 
 pub fn run_mcp(host: String, port: u16) -> Result<()> {
     println!("{}", "Starting Folio MCP server...".cyan());
-    println!("{}", "This server implements the Model Context Protocol for AI integration.".dimmed());
+    println!(
+        "{}",
+        "This server implements the Model Context Protocol for AI integration.".dimmed()
+    );
     println!();
 
     // Run async server

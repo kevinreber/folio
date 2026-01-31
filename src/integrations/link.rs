@@ -1,9 +1,9 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use regex::Regex;
 use url::Url;
 
+use super::{GitHubClient, LinearClient};
 use crate::types::Activity;
-use super::{GitHubClient, LinearClient, github, linear};
 
 /// Enricher that can fetch details from URLs and convert to activities
 pub struct LinkEnricher {
@@ -13,11 +13,27 @@ pub struct LinkEnricher {
 
 #[derive(Debug, Clone)]
 pub enum LinkType {
-    GitHubPr { owner: String, repo: String, number: u64 },
-    GitHubIssue { owner: String, repo: String, number: u64 },
-    GitHubRepo { owner: String, repo: String },
-    LinearIssue { identifier: String },
-    JiraIssue { project: String, number: String },
+    GitHubPr {
+        owner: String,
+        repo: String,
+        number: u64,
+    },
+    GitHubIssue {
+        owner: String,
+        repo: String,
+        number: u64,
+    },
+    GitHubRepo {
+        owner: String,
+        repo: String,
+    },
+    LinearIssue {
+        identifier: String,
+    },
+    JiraIssue {
+        project: String,
+        number: String,
+    },
     Unknown,
 }
 
@@ -47,7 +63,8 @@ impl LinkEnricher {
         };
 
         let host = parsed.host_str().unwrap_or("");
-        let path_segments: Vec<&str> = parsed.path_segments()
+        let path_segments: Vec<&str> = parsed
+            .path_segments()
             .map(|s| s.collect())
             .unwrap_or_default();
 
@@ -60,12 +77,20 @@ impl LinkEnricher {
                 match path_segments[2] {
                     "pull" => {
                         if let Ok(number) = path_segments[3].parse() {
-                            return LinkType::GitHubPr { owner, repo, number };
+                            return LinkType::GitHubPr {
+                                owner,
+                                repo,
+                                number,
+                            };
                         }
                     }
                     "issues" => {
                         if let Ok(number) = path_segments[3].parse() {
-                            return LinkType::GitHubIssue { owner, repo, number };
+                            return LinkType::GitHubIssue {
+                                owner,
+                                repo,
+                                number,
+                            };
                         }
                     }
                     _ => {}
@@ -81,12 +106,10 @@ impl LinkEnricher {
         }
 
         // Linear detection
-        if host.contains("linear.app") {
-            if path_segments.len() >= 3 && path_segments[1] == "issue" {
-                return LinkType::LinearIssue {
-                    identifier: path_segments[2].to_string(),
-                };
-            }
+        if host.contains("linear.app") && path_segments.len() >= 3 && path_segments[1] == "issue" {
+            return LinkType::LinearIssue {
+                identifier: path_segments[2].to_string(),
+            };
         }
 
         // Jira detection
@@ -125,7 +148,11 @@ impl LinkEnricher {
         };
 
         match &link_type {
-            LinkType::GitHubPr { owner, repo, number } => {
+            LinkType::GitHubPr {
+                owner,
+                repo,
+                number,
+            } => {
                 if let Some(ref client) = self.github_client {
                     match client.get_pr(owner, repo, *number) {
                         Ok(pr) => {
@@ -139,8 +166,12 @@ impl LinkEnricher {
                     }
                 }
             }
-            LinkType::GitHubIssue { owner, repo, number } => {
-                if let Some(ref client) = self.github_client {
+            LinkType::GitHubIssue {
+                owner,
+                repo,
+                number,
+            } => {
+                if self.github_client.is_some() {
                     // For issues, we'd need a separate API call
                     // For now, just set basic info
                     enriched.title = Some(format!("Issue #{} in {}/{}", number, owner, repo));
@@ -165,9 +196,8 @@ impl LinkEnricher {
 
     /// Extract all links from text
     pub fn extract_links(&self, text: &str) -> Vec<String> {
-        let url_pattern = Regex::new(
-            r#"https?://[^\s<>\[\](){}"',;]+[^\s<>\[\](){}"',;.!?]"#
-        ).unwrap();
+        let url_pattern =
+            Regex::new(r#"https?://[^\s<>\[\](){}"',;]+[^\s<>\[\](){}"',;.!?]"#).unwrap();
 
         url_pattern
             .find_iter(text)
@@ -193,7 +223,11 @@ mod tests {
         let enricher = LinkEnricher::new(None, None);
 
         match enricher.detect_link_type("https://github.com/owner/repo/pull/123") {
-            LinkType::GitHubPr { owner, repo, number } => {
+            LinkType::GitHubPr {
+                owner,
+                repo,
+                number,
+            } => {
                 assert_eq!(owner, "owner");
                 assert_eq!(repo, "repo");
                 assert_eq!(number, 123);

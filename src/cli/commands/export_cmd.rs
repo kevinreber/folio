@@ -3,14 +3,9 @@ use colored::Colorize;
 use std::path::PathBuf;
 
 use crate::db::Database;
-use crate::export::{Exporter, ExportFormat, markdown};
+use crate::export::{markdown, ExportFormat, Exporter};
 
-pub fn run(
-    format: String,
-    output: Option<PathBuf>,
-    brag: bool,
-    bullets: bool,
-) -> Result<()> {
+pub fn run(format: String, output: Option<PathBuf>, brag: bool, bullets: bool) -> Result<()> {
     let db = Database::open()?;
     let activities = db.list_activities(None)?;
     let accomplishments = db.list_accomplishments()?;
@@ -87,7 +82,10 @@ pub fn import(path: PathBuf, dry_run: bool) -> Result<()> {
 
     if dry_run {
         println!();
-        println!("{}", "Dry run - activities that would be imported:".yellow());
+        println!(
+            "{}",
+            "Dry run - activities that would be imported:".yellow()
+        );
         for activity in &activities {
             println!("  {} {}", "•".dimmed(), activity.title);
         }
