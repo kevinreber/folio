@@ -2,16 +2,23 @@ use anyhow::Result;
 use colored::Colorize;
 use std::io::{self, Read};
 
-use crate::db::Database;
 use crate::ai::JobMatcher;
+use crate::db::Database;
 
-pub fn run(job_title: String, description: Option<String>, file: Option<std::path::PathBuf>) -> Result<()> {
+pub fn run(
+    job_title: String,
+    description: Option<String>,
+    file: Option<std::path::PathBuf>,
+) -> Result<()> {
     let db = Database::open()?;
     let activities = db.list_activities(None)?;
 
     if activities.is_empty() {
         println!("{}", "No activities to match against.".dimmed());
-        println!("{}", "Capture some activities first with `folio capture`".dimmed());
+        println!(
+            "{}",
+            "Capture some activities first with `folio capture`".dimmed()
+        );
         return Ok(());
     }
 
@@ -21,7 +28,10 @@ pub fn run(job_title: String, description: Option<String>, file: Option<std::pat
     } else if let Some(desc) = description {
         desc
     } else {
-        println!("{}", "Paste the job description (end with Ctrl+D or Ctrl+Z):".yellow());
+        println!(
+            "{}",
+            "Paste the job description (end with Ctrl+D or Ctrl+Z):".yellow()
+        );
         let mut buffer = String::new();
         io::stdin().read_to_string(&mut buffer)?;
         buffer
@@ -81,7 +91,11 @@ pub fn run(job_title: String, description: Option<String>, file: Option<std::pat
     }
 
     // Preferred qualifications
-    let matched_preferred: Vec<_> = result.matched_preferred.iter().filter(|p| p.matched).collect();
+    let matched_preferred: Vec<_> = result
+        .matched_preferred
+        .iter()
+        .filter(|p| p.matched)
+        .collect();
     if !matched_preferred.is_empty() {
         println!("{}", "Preferred Qualifications Met".yellow().bold());
         for pref in matched_preferred {

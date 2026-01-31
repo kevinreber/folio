@@ -1,20 +1,15 @@
 use anyhow::Result;
-use axum::{
-    extract::State,
-    response::IntoResponse,
-    routing::post,
-    Json, Router,
-};
+use axum::{extract::State, response::IntoResponse, routing::post, Json, Router};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tower_http::cors::{Any, CorsLayer};
 
+use crate::ai::{BulletGenerator, DigestGenerator};
 use crate::db::Database;
+use crate::export::{ExportFormat, Exporter};
 use crate::types::Activity;
-use crate::ai::{BulletGenerator, DigestGenerator, AutoTagger};
-use crate::export::{Exporter, ExportFormat};
 
 /// MCP Server for Claude integration
 /// Implements the Model Context Protocol for AI assistants
@@ -52,9 +47,7 @@ pub struct McpState {
 /// Start the MCP server
 pub async fn serve(host: &str, port: u16) -> Result<()> {
     let db = Database::open()?;
-    let state = Arc::new(McpState {
-        db: Mutex::new(db),
-    });
+    let state = Arc::new(McpState { db: Mutex::new(db) });
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -277,7 +270,10 @@ fn handle_resources_list(request: &McpRequest) -> McpResponse {
 async fn handle_tools_call(state: &McpState, request: &McpRequest) -> McpResponse {
     let params = &request.params;
     let tool_name = params.get("name").and_then(|n| n.as_str()).unwrap_or("");
-    let arguments = params.get("arguments").cloned().unwrap_or(serde_json::json!({}));
+    let arguments = params
+        .get("arguments")
+        .cloned()
+        .unwrap_or(serde_json::json!({}));
 
     let result = match tool_name {
         "folio_list_activities" => tool_list_activities(state, &arguments).await,
@@ -318,48 +314,68 @@ async fn tool_list_activities(state: &McpState, args: &Value) -> Result<String, 
     let db = state.db.lock().await;
     let limit = args.get("limit").and_then(|l| l.as_u64()).unwrap_or(10) as u32;
 
-    let activities = db.list_activities(Some(limit))
-        .map_err(|e| e.to_string())?;
+    let activities = db.list_activities(Some(limit)).map_err(|e| e.to_string())?;
 
     let project_filter = args.get("project").and_then(|p| p.as_str());
 
     let filtered: Vec<_> = if let Some(project) = project_filter {
-        activities.into_iter()
-            .filter(|a| a.project.as_ref().map(|p| p.contains(project)).unwrap_or(false))
+        activities
+            .into_iter()
+            .filter(|a| {
+                a.project
+                    .as_ref()
+                    .map(|p| p.contains(project))
+                    .unwrap_or(false)
+            })
             .collect()
     } else {
         activities
     };
 
-    let output: Vec<String> = filtered.iter().map(|a| {
-        format!(
-            "- [{}] {} ({})\n  Project: {}\n  Importance: {}",
-            &a.id[..8],
-            a.title,
-            a.timestamp.format("%Y-%m-%d"),
-            a.project.as_deref().unwrap_or("None"),
-            a.importance
-        )
-    }).collect();
+    let output: Vec<String> = filtered
+        .iter()
+        .map(|a| {
+            format!(
+                "- [{}] {} ({})\n  Project: {}\n  Importance: {}",
+                &a.id[..8],
+                a.title,
+                a.timestamp.format("%Y-%m-%d"),
+                a.project.as_deref().unwrap_or("None"),
+                a.importance
+            )
+        })
+        .collect();
 
-    Ok(format!("Found {} activities:\n\n{}", filtered.len(), output.join("\n\n")))
+    Ok(format!(
+        "Found {} activities:\n\n{}",
+        filtered.len(),
+        output.join("\n\n")
+    ))
 }
 
 async fn tool_search(state: &McpState, args: &Value) -> Result<String, String> {
-    let query = args.get("query").and_then(|q| q.as_str())
+    let query = args
+        .get("query")
+        .and_then(|q| q.as_str())
         .ok_or("Missing 'query' parameter")?;
     let limit = args.get("limit").and_then(|l| l.as_u64()).unwrap_or(10) as usize;
 
     let db = state.db.lock().await;
-    let activities = db.list_activities(Some(100))
-        .map_err(|e| e.to_string())?;
+    let activities = db.list_activities(Some(100)).map_err(|e| e.to_string())?;
 
     let query_lower = query.to_lowercase();
-    let results: Vec<_> = activities.into_iter()
+    let results: Vec<_> = activities
+        .into_iter()
         .filter(|a| {
             a.title.to_lowercase().contains(&query_lower)
-                || a.description.as_ref().map(|d| d.to_lowercase().contains(&query_lower)).unwrap_or(false)
-                || a.project.as_ref().map(|p| p.to_lowercase().contains(&query_lower)).unwrap_or(false)
+                || a.description
+                    .as_ref()
+                    .map(|d| d.to_lowercase().contains(&query_lower))
+                    .unwrap_or(false)
+                || a.project
+                    .as_ref()
+                    .map(|p| p.to_lowercase().contains(&query_lower))
+                    .unwrap_or(false)
         })
         .take(limit)
         .collect();
@@ -368,19 +384,28 @@ async fn tool_search(state: &McpState, args: &Value) -> Result<String, String> {
         return Ok(format!("No activities found matching '{}'", query));
     }
 
-    let output: Vec<String> = results.iter().map(|a| {
-        format!("- [{}] {}", &a.id[..8], a.title)
-    }).collect();
+    let output: Vec<String> = results
+        .iter()
+        .map(|a| format!("- [{}] {}", &a.id[..8], a.title))
+        .collect();
 
-    Ok(format!("Found {} results for '{}':\n\n{}", results.len(), query, output.join("\n")))
+    Ok(format!(
+        "Found {} results for '{}':\n\n{}",
+        results.len(),
+        query,
+        output.join("\n")
+    ))
 }
 
 async fn tool_get_activity(state: &McpState, args: &Value) -> Result<String, String> {
-    let id = args.get("id").and_then(|i| i.as_str())
+    let id = args
+        .get("id")
+        .and_then(|i| i.as_str())
         .ok_or("Missing 'id' parameter")?;
 
     let db = state.db.lock().await;
-    let activity = db.get_activity(id)
+    let activity = db
+        .get_activity(id)
         .map_err(|e| e.to_string())?
         .or_else(|| db.get_activity_by_partial_id(id).ok().flatten())
         .ok_or_else(|| format!("Activity not found: {}", id))?;
@@ -410,12 +435,15 @@ async fn tool_get_activity(state: &McpState, args: &Value) -> Result<String, Str
 }
 
 async fn tool_create_activity(state: &McpState, args: &Value) -> Result<String, String> {
-    let title = args.get("title").and_then(|t| t.as_str())
+    let title = args
+        .get("title")
+        .and_then(|t| t.as_str())
         .ok_or("Missing 'title' parameter")?;
 
     let db = state.db.lock().await;
 
-    let importance = args.get("importance")
+    let importance = args
+        .get("importance")
         .and_then(|i| i.as_str())
         .and_then(|i| i.parse().ok())
         .unwrap_or(crate::types::Importance::Medium);
@@ -435,8 +463,7 @@ async fn tool_create_activity(state: &McpState, args: &Value) -> Result<String, 
     }
 
     let id = activity.id.clone();
-    db.insert_activity(&activity)
-        .map_err(|e| e.to_string())?;
+    db.insert_activity(&activity).map_err(|e| e.to_string())?;
 
     Ok(format!("Created activity: {} (ID: {})", title, &id[..8]))
 }
@@ -448,8 +475,12 @@ async fn tool_generate_bullets(state: &McpState, args: &Value) -> Result<String,
         let id_strings: Vec<&str> = ids.iter().filter_map(|i| i.as_str()).collect();
         let mut found = Vec::new();
         for id in id_strings {
-            if let Some(a) = db.get_activity(id).ok().flatten()
-                .or_else(|| db.get_activity_by_partial_id(id).ok().flatten()) {
+            if let Some(a) = db
+                .get_activity(id)
+                .ok()
+                .flatten()
+                .or_else(|| db.get_activity_by_partial_id(id).ok().flatten())
+            {
                 found.push(a);
             }
         }
@@ -472,12 +503,18 @@ async fn tool_generate_bullets(state: &McpState, args: &Value) -> Result<String,
         }
     }
 
-    Ok(format!("Generated resume bullets:\n\n{}", all_bullets.join("\n")))
+    Ok(format!(
+        "Generated resume bullets:\n\n{}",
+        all_bullets.join("\n")
+    ))
 }
 
 async fn tool_generate_digest(state: &McpState, args: &Value) -> Result<String, String> {
     let db = state.db.lock().await;
-    let period = args.get("period").and_then(|p| p.as_str()).unwrap_or("weekly");
+    let period = args
+        .get("period")
+        .and_then(|p| p.as_str())
+        .unwrap_or("weekly");
 
     let activities = db.list_activities(Some(100)).map_err(|e| e.to_string())?;
 
@@ -496,7 +533,10 @@ async fn tool_generate_digest(state: &McpState, args: &Value) -> Result<String, 
 
 async fn tool_export(state: &McpState, args: &Value) -> Result<String, String> {
     let db = state.db.lock().await;
-    let format = args.get("format").and_then(|f| f.as_str()).unwrap_or("markdown");
+    let format = args
+        .get("format")
+        .and_then(|f| f.as_str())
+        .unwrap_or("markdown");
 
     let activities = db.list_activities(None).map_err(|e| e.to_string())?;
 
@@ -506,6 +546,5 @@ async fn tool_export(state: &McpState, args: &Value) -> Result<String, String> {
         _ => ExportFormat::Markdown,
     };
 
-    Exporter::export(activities, vec![], export_format)
-        .map_err(|e| e.to_string())
+    Exporter::export(activities, vec![], export_format).map_err(|e| e.to_string())
 }

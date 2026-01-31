@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use reqwest::blocking::Client;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::types::{Activity, ActivitySource, ActivityType, Importance};
 
@@ -100,13 +100,18 @@ impl LinearClient {
         }
     }
 
-    fn query<T: for<'de> Deserialize<'de>>(&self, query: &str, variables: serde_json::Value) -> Result<T> {
+    fn query<T: for<'de> Deserialize<'de>>(
+        &self,
+        query: &str,
+        variables: serde_json::Value,
+    ) -> Result<T> {
         let body = serde_json::json!({
             "query": query,
             "variables": variables,
         });
 
-        let resp = self.client
+        let resp = self
+            .client
             .post(LINEAR_API_BASE)
             .header("Authorization", &self.api_key)
             .header("Content-Type", "application/json")
@@ -271,17 +276,18 @@ impl LinearClient {
     fn infer_importance(&self, issue: &LinearIssue) -> Importance {
         // Priority: 0 = no priority, 1 = urgent, 2 = high, 3 = medium, 4 = low
         match issue.priority {
-            1 => Importance::High, // Urgent
-            2 => Importance::High, // High
+            1 => Importance::High,   // Urgent
+            2 => Importance::High,   // High
             3 => Importance::Medium, // Medium
-            4 => Importance::Low, // Low
+            4 => Importance::Low,    // Low
             _ => {
                 // Check labels
-                let labels: Vec<&str> = issue.labels.nodes.iter().map(|l| l.name.as_str()).collect();
-                if labels.iter().any(|l| l.to_lowercase().contains("critical") || l.to_lowercase().contains("urgent")) {
+                let labels: Vec<&str> =
+                    issue.labels.nodes.iter().map(|l| l.name.as_str()).collect();
+                if labels.iter().any(|l| {
+                    l.to_lowercase().contains("critical") || l.to_lowercase().contains("urgent")
+                }) {
                     Importance::High
-                } else if labels.iter().any(|l| l.to_lowercase().contains("feature")) {
-                    Importance::Medium
                 } else {
                     Importance::Medium
                 }

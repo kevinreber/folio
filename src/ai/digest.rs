@@ -1,4 +1,4 @@
-use chrono::{DateTime, Datelike, Duration, Utc};
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -137,8 +137,14 @@ impl DigestGenerator {
                 Importance::Low => stats.low_importance += 1,
             }
 
-            *stats.by_type.entry(activity.activity_type.to_string()).or_insert(0) += 1;
-            *stats.by_source.entry(activity.source.to_string()).or_insert(0) += 1;
+            *stats
+                .by_type
+                .entry(activity.activity_type.to_string())
+                .or_insert(0) += 1;
+            *stats
+                .by_source
+                .entry(activity.source.to_string())
+                .or_insert(0) += 1;
 
             if let Some(project) = &activity.project {
                 projects.insert(project.clone());
@@ -156,7 +162,11 @@ impl DigestGenerator {
             .map(|a| DigestHighlight {
                 activity_id: a.id.clone(),
                 title: a.title.clone(),
-                impact: a.metadata.get("impact").and_then(|v| v.as_str()).map(String::from),
+                impact: a
+                    .metadata
+                    .get("impact")
+                    .and_then(|v| v.as_str())
+                    .map(String::from),
                 importance: a.importance.clone(),
             })
             .collect();
@@ -180,17 +190,17 @@ impl DigestGenerator {
         let mut grouped: HashMap<String, Vec<ActivitySummary>> = HashMap::new();
 
         for activity in activities {
-            let project = activity.project.clone().unwrap_or_else(|| "(No Project)".to_string());
+            let project = activity
+                .project
+                .clone()
+                .unwrap_or_else(|| "(No Project)".to_string());
 
-            grouped
-                .entry(project)
-                .or_default()
-                .push(ActivitySummary {
-                    id: activity.id.clone(),
-                    title: activity.title.clone(),
-                    importance: activity.importance.clone(),
-                    timestamp: activity.timestamp,
-                });
+            grouped.entry(project).or_default().push(ActivitySummary {
+                id: activity.id.clone(),
+                title: activity.title.clone(),
+                importance: activity.importance.clone(),
+                timestamp: activity.timestamp,
+            });
         }
 
         // Sort each project's activities by timestamp
@@ -213,7 +223,7 @@ impl DigestGenerator {
 
     fn generate_summary(
         &self,
-        activities: &[&Activity],
+        _activities: &[&Activity],
         period: DigestPeriod,
         stats: &DigestStats,
     ) -> String {
@@ -236,7 +246,11 @@ impl DigestGenerator {
         summary_parts.push(format!(
             "You captured {} {} this {}.",
             stats.total_activities,
-            if stats.total_activities == 1 { "activity" } else { "activities" },
+            if stats.total_activities == 1 {
+                "activity"
+            } else {
+                "activities"
+            },
             period_name
         ));
 
@@ -245,7 +259,11 @@ impl DigestGenerator {
             summary_parts.push(format!(
                 "{} {} high-importance.",
                 stats.high_importance,
-                if stats.high_importance == 1 { "was" } else { "were" }
+                if stats.high_importance == 1 {
+                    "was"
+                } else {
+                    "were"
+                }
             ));
         }
 
@@ -298,12 +316,27 @@ impl DigestGenerator {
 
         // Stats
         md.push_str("## Statistics\n\n");
-        md.push_str(&format!("- **Total Activities:** {}\n", digest.stats.total_activities));
-        md.push_str(&format!("- **High Importance:** {}\n", digest.stats.high_importance));
-        md.push_str(&format!("- **Medium Importance:** {}\n", digest.stats.medium_importance));
-        md.push_str(&format!("- **Low Importance:** {}\n", digest.stats.low_importance));
-        md.push_str(&format!("- **Projects:** {}\n", digest.stats.projects_touched));
-        md.push_str("\n");
+        md.push_str(&format!(
+            "- **Total Activities:** {}\n",
+            digest.stats.total_activities
+        ));
+        md.push_str(&format!(
+            "- **High Importance:** {}\n",
+            digest.stats.high_importance
+        ));
+        md.push_str(&format!(
+            "- **Medium Importance:** {}\n",
+            digest.stats.medium_importance
+        ));
+        md.push_str(&format!(
+            "- **Low Importance:** {}\n",
+            digest.stats.low_importance
+        ));
+        md.push_str(&format!(
+            "- **Projects:** {}\n",
+            digest.stats.projects_touched
+        ));
+        md.push('\n');
 
         // Highlights
         if !digest.highlights.is_empty() {
@@ -313,9 +346,9 @@ impl DigestGenerator {
                 if let Some(impact) = &highlight.impact {
                     md.push_str(&format!(" - {}", impact));
                 }
-                md.push_str("\n");
+                md.push('\n');
             }
-            md.push_str("\n");
+            md.push('\n');
         }
 
         // By Project
@@ -331,7 +364,7 @@ impl DigestGenerator {
                     };
                     md.push_str(&format!("- {} {}\n", importance_marker, activity.title));
                 }
-                md.push_str("\n");
+                md.push('\n');
             }
         }
 
@@ -346,7 +379,7 @@ impl DigestGenerator {
         if !digest.themes.is_empty() {
             md.push_str("## Themes\n\n");
             md.push_str(&digest.themes.join(", "));
-            md.push_str("\n");
+            md.push('\n');
         }
 
         md

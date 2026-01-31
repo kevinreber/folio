@@ -1,14 +1,14 @@
 pub mod bullets;
-pub mod star;
-pub mod tagger;
 pub mod digest;
 pub mod matcher;
+pub mod star;
+pub mod tagger;
 
 pub use bullets::BulletGenerator;
-pub use star::StarBuilder;
-pub use tagger::AutoTagger;
 pub use digest::DigestGenerator;
 pub use matcher::JobMatcher;
+pub use star::StarBuilder;
+pub use tagger::AutoTagger;
 
 use serde::{Deserialize, Serialize};
 

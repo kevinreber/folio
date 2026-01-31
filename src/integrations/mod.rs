@@ -6,4 +6,3 @@ pub mod link;
 pub use git::GitScanner;
 pub use github::GitHubClient;
 pub use linear::LinearClient;
-pub use link::LinkEnricher;

@@ -1,5 +1,5 @@
-pub mod markdown;
 pub mod json;
+pub mod markdown;
 pub mod yaml;
 
 use anyhow::Result;
@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-use crate::types::{Activity, Accomplishment};
+use crate::types::{Accomplishment, Activity};
 
 /// Export format enum
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -25,7 +25,10 @@ impl std::str::FromStr for ExportFormat {
             "markdown" | "md" => Ok(Self::Markdown),
             "json" => Ok(Self::Json),
             "yaml" | "yml" => Ok(Self::Yaml),
-            _ => Err(anyhow::anyhow!("Unknown export format: {}. Use: markdown, json, or yaml", s)),
+            _ => Err(anyhow::anyhow!(
+                "Unknown export format: {}. Use: markdown, json, or yaml",
+                s
+            )),
         }
     }
 }
@@ -96,7 +99,10 @@ impl Exporter {
         Ok(())
     }
 
-    fn build_export_data(activities: Vec<Activity>, accomplishments: Vec<Accomplishment>) -> ExportData {
+    fn build_export_data(
+        activities: Vec<Activity>,
+        accomplishments: Vec<Accomplishment>,
+    ) -> ExportData {
         let mut projects: Vec<String> = activities
             .iter()
             .filter_map(|a| a.project.clone())
@@ -155,9 +161,7 @@ impl Importer {
     /// Import from file, detecting format from extension
     pub fn from_file(path: &Path) -> Result<Vec<Activity>> {
         let content = std::fs::read_to_string(path)?;
-        let extension = path.extension()
-            .and_then(|e| e.to_str())
-            .unwrap_or("");
+        let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("");
 
         match extension {
             "json" => Self::from_json(&content),

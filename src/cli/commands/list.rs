@@ -1,6 +1,6 @@
 use anyhow::Result;
 use colored::Colorize;
-use tabled::{Table, Tabled, settings::Style};
+use tabled::{settings::Style, Table, Tabled};
 
 use crate::db::Database;
 use crate::types::Activity;

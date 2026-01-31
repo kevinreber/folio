@@ -1,7 +1,6 @@
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use crate::types::{Activity, Accomplishment};
+use crate::types::{Accomplishment, Activity};
 
 /// Generator for resume bullet points
 pub struct BulletGenerator {
@@ -24,10 +23,10 @@ pub struct GeneratedBullet {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum BulletStyle {
-    Impact,      // Focus on results and impact
-    Technical,   // Focus on technical details
-    Leadership,  // Focus on leadership and collaboration
-    Concise,     // Short and punchy
+    Impact,     // Focus on results and impact
+    Technical,  // Focus on technical details
+    Leadership, // Focus on leadership and collaboration
+    Concise,    // Short and punchy
 }
 
 impl Default for BulletGenerator {
@@ -75,7 +74,9 @@ impl BulletGenerator {
         // Extract key information
         let title = &activity.title;
         let description = activity.description.as_deref().unwrap_or("");
-        let impact = activity.metadata.get("impact")
+        let impact = activity
+            .metadata
+            .get("impact")
             .and_then(|v| v.as_str())
             .unwrap_or("");
 
@@ -89,7 +90,11 @@ impl BulletGenerator {
         }
 
         // Generate technical bullet if we have tech details
-        if let Some(lines_changed) = activity.metadata.get("lines_changed").and_then(|v| v.as_u64()) {
+        if let Some(lines_changed) = activity
+            .metadata
+            .get("lines_changed")
+            .and_then(|v| v.as_u64())
+        {
             if lines_changed > 100 {
                 bullets.push(GeneratedBullet {
                     text: self.format_technical_bullet(title, lines_changed),
@@ -110,7 +115,10 @@ impl BulletGenerator {
     }
 
     /// Generate bullet points from an accomplishment
-    pub fn generate_from_accomplishment(&self, accomplishment: &Accomplishment) -> Vec<GeneratedBullet> {
+    pub fn generate_from_accomplishment(
+        &self,
+        accomplishment: &Accomplishment,
+    ) -> Vec<GeneratedBullet> {
         let mut bullets = Vec::new();
 
         // If we have STAR data, use it for high-quality bullets
@@ -176,20 +184,53 @@ impl BulletGenerator {
     fn format_metric_bullet(&self, title: &str, metric: &crate::types::Metric) -> String {
         let action_verb = self.extract_or_add_action_verb(title);
         match metric.metric_type.as_str() {
-            "percentage" => format!("{} achieving {}% {}", action_verb, metric.value, metric.description),
-            "currency" => format!("{} saving ${} {}", action_verb, metric.value, metric.description),
-            "time" => format!("{} reducing {} by {} hours", action_verb, metric.description, metric.value),
-            _ => format!("{} with {} {}", action_verb, metric.value, metric.description),
+            "percentage" => format!(
+                "{} achieving {}% {}",
+                action_verb, metric.value, metric.description
+            ),
+            "currency" => format!(
+                "{} saving ${} {}",
+                action_verb, metric.value, metric.description
+            ),
+            "time" => format!(
+                "{} reducing {} by {} hours",
+                action_verb, metric.description, metric.value
+            ),
+            _ => format!(
+                "{} with {} {}",
+                action_verb, metric.value, metric.description
+            ),
         }
     }
 
     fn extract_or_add_action_verb(&self, text: &str) -> String {
         let action_verbs = [
-            "implemented", "developed", "designed", "built", "created", "led",
-            "improved", "optimized", "reduced", "increased", "launched",
-            "deployed", "migrated", "refactored", "automated", "integrated",
-            "architected", "engineered", "delivered", "shipped", "fixed",
-            "resolved", "established", "introduced", "pioneered", "spearheaded",
+            "implemented",
+            "developed",
+            "designed",
+            "built",
+            "created",
+            "led",
+            "improved",
+            "optimized",
+            "reduced",
+            "increased",
+            "launched",
+            "deployed",
+            "migrated",
+            "refactored",
+            "automated",
+            "integrated",
+            "architected",
+            "engineered",
+            "delivered",
+            "shipped",
+            "fixed",
+            "resolved",
+            "established",
+            "introduced",
+            "pioneered",
+            "spearheaded",
         ];
 
         let first_word = text.split_whitespace().next().unwrap_or("").to_lowercase();
@@ -213,8 +254,14 @@ impl BulletGenerator {
     }
 
     /// Apply a specific template to content
-    pub fn apply_template(&self, template_name: &str, content: &str, impact: &str) -> Option<String> {
-        self.templates.iter()
+    pub fn apply_template(
+        &self,
+        template_name: &str,
+        content: &str,
+        impact: &str,
+    ) -> Option<String> {
+        self.templates
+            .iter()
             .find(|t| t.name == template_name)
             .map(|_| self.format_impact_bullet(content, impact))
     }
@@ -223,27 +270,67 @@ impl BulletGenerator {
 /// Predefined action verbs categorized by type
 pub mod action_verbs {
     pub const LEADERSHIP: &[&str] = &[
-        "led", "managed", "directed", "coordinated", "supervised",
-        "mentored", "coached", "guided", "facilitated", "spearheaded",
+        "led",
+        "managed",
+        "directed",
+        "coordinated",
+        "supervised",
+        "mentored",
+        "coached",
+        "guided",
+        "facilitated",
+        "spearheaded",
     ];
 
     pub const TECHNICAL: &[&str] = &[
-        "implemented", "developed", "engineered", "architected", "designed",
-        "built", "created", "programmed", "coded", "debugged",
+        "implemented",
+        "developed",
+        "engineered",
+        "architected",
+        "designed",
+        "built",
+        "created",
+        "programmed",
+        "coded",
+        "debugged",
     ];
 
     pub const IMPROVEMENT: &[&str] = &[
-        "improved", "enhanced", "optimized", "streamlined", "accelerated",
-        "reduced", "increased", "expanded", "upgraded", "modernized",
+        "improved",
+        "enhanced",
+        "optimized",
+        "streamlined",
+        "accelerated",
+        "reduced",
+        "increased",
+        "expanded",
+        "upgraded",
+        "modernized",
     ];
 
     pub const DELIVERY: &[&str] = &[
-        "delivered", "shipped", "launched", "deployed", "released",
-        "published", "completed", "executed", "achieved", "accomplished",
+        "delivered",
+        "shipped",
+        "launched",
+        "deployed",
+        "released",
+        "published",
+        "completed",
+        "executed",
+        "achieved",
+        "accomplished",
     ];
 
     pub const COLLABORATION: &[&str] = &[
-        "collaborated", "partnered", "coordinated", "aligned", "integrated",
-        "unified", "consolidated", "synchronized", "liaised", "bridged",
+        "collaborated",
+        "partnered",
+        "coordinated",
+        "aligned",
+        "integrated",
+        "unified",
+        "consolidated",
+        "synchronized",
+        "liaised",
+        "bridged",
     ];
 }

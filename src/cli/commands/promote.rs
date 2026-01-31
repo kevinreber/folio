@@ -2,9 +2,9 @@ use anyhow::{Context, Result};
 use colored::Colorize;
 use std::io::{self, Write};
 
+use crate::ai::{AutoTagger, BulletGenerator, StarBuilder};
 use crate::db::Database;
-use crate::ai::{StarBuilder, BulletGenerator, AutoTagger};
-use crate::types::{Accomplishment, Metric};
+use crate::types::Metric;
 
 pub fn run(id: String, interactive: bool) -> Result<()> {
     let db = Database::open()?;
@@ -25,7 +25,11 @@ pub fn run(id: String, interactive: bool) -> Result<()> {
     let tagger = AutoTagger::new();
     let tags = tagger.tag(&activity);
 
-    println!("{} {}", "Detected skills:".dimmed(), tags.technical_skills.join(", "));
+    println!(
+        "{} {}",
+        "Detected skills:".dimmed(),
+        tags.technical_skills.join(", ")
+    );
     println!("{} {}", "Detected themes:".dimmed(), tags.themes.join(", "));
     println!();
 
@@ -61,27 +65,35 @@ pub fn run(id: String, interactive: bool) -> Result<()> {
         (situation, task, action, result)
     } else {
         // Auto-generate from activity
-        let draft = star_builder.from_activity(&activity);
+        let draft = star_builder.draft_from_activity(&activity);
 
-        let situation = draft.situation_hints.first()
-            .cloned()
-            .unwrap_or_else(|| format!("While working on {}",
-                activity.project.as_deref().unwrap_or("the project")));
+        let situation = draft.situation_hints.first().cloned().unwrap_or_else(|| {
+            format!(
+                "While working on {}",
+                activity.project.as_deref().unwrap_or("the project")
+            )
+        });
 
-        let task = draft.task_hints.first()
+        let task = draft
+            .task_hints
+            .first()
             .cloned()
             .unwrap_or_else(|| activity.title.clone());
 
-        let action = draft.action_hints.first()
+        let action = draft
+            .action_hints
+            .first()
             .cloned()
             .unwrap_or_else(|| activity.description.clone().unwrap_or_default());
 
-        let result = draft.result_hints.first()
-            .cloned()
-            .unwrap_or_else(|| activity.metadata.get("impact")
+        let result = draft.result_hints.first().cloned().unwrap_or_else(|| {
+            activity
+                .metadata
+                .get("impact")
                 .and_then(|v| v.as_str())
                 .unwrap_or("Successfully completed the task")
-                .to_string());
+                .to_string()
+        });
 
         println!("{}", "Auto-generated STAR story:".yellow());
         println!();
@@ -96,7 +108,11 @@ pub fn run(id: String, interactive: bool) -> Result<()> {
 
     // Collect metrics
     let mut metrics = Vec::new();
-    if let Some(lines) = activity.metadata.get("lines_changed").and_then(|v| v.as_u64()) {
+    if let Some(lines) = activity
+        .metadata
+        .get("lines_changed")
+        .and_then(|v| v.as_u64())
+    {
         if lines > 50 {
             metrics.push(Metric {
                 metric_type: "absolute".to_string(),
@@ -117,7 +133,7 @@ pub fn run(id: String, interactive: bool) -> Result<()> {
     );
 
     // Generate bullets
-    let bullet_gen = BulletGenerator::new();
+    let _bullet_gen = BulletGenerator::new();
     let accomplishment = star_builder.to_accomplishment(&story, vec![activity.id.clone()]);
 
     // Save accomplishment

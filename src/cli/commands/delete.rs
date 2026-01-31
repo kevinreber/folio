@@ -36,7 +36,11 @@ pub fn run(id: String, force: bool) -> Result<()> {
     let deleted = db.delete_activity(&activity.id)?;
 
     if deleted {
-        println!("{} Deleted activity {}", "✓".green().bold(), &activity.id[..8]);
+        println!(
+            "{} Deleted activity {}",
+            "✓".green().bold(),
+            &activity.id[..8]
+        );
     } else {
         println!("{} Activity not found", "✗".red().bold());
     }

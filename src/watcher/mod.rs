@@ -1,5 +1,5 @@
 use anyhow::Result;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -8,7 +8,7 @@ use tokio::time;
 
 use crate::config::Config;
 use crate::db::Database;
-use crate::integrations::{GitScanner, git::GitScanConfig};
+use crate::integrations::{git::GitScanConfig, GitScanner};
 use crate::types::Activity;
 
 /// Background watcher that monitors git repositories for new commits
@@ -116,7 +116,10 @@ impl Watcher {
             }
         }
 
-        println!("Initial scan complete. Tracking {} existing commits.", seen.len());
+        println!(
+            "Initial scan complete. Tracking {} existing commits.",
+            seen.len()
+        );
         Ok(())
     }
 
@@ -138,7 +141,9 @@ impl Watcher {
         let db = self.db.lock().await;
 
         for activity in activities {
-            let sha = activity.metadata.get("commit_sha")
+            let sha = activity
+                .metadata
+                .get("commit_sha")
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();

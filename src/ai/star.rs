@@ -1,7 +1,6 @@
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use crate::types::{Activity, Accomplishment, Metric};
+use crate::types::{Accomplishment, Activity, Metric};
 
 /// Builder for STAR (Situation, Task, Action, Result) formatted stories
 pub struct StarBuilder {
@@ -98,12 +97,14 @@ impl StarBuilder {
     }
 
     /// Build a STAR story from an activity with automatic extraction
-    pub fn from_activity(&self, activity: &Activity) -> StarStoryDraft {
+    pub fn draft_from_activity(&self, activity: &Activity) -> StarStoryDraft {
         let mut draft = StarStoryDraft::new();
 
         // Extract situation from context
         if let Some(project) = &activity.project {
-            draft.situation_hints.push(format!("Working on the {} project", project));
+            draft
+                .situation_hints
+                .push(format!("Working on the {} project", project));
         }
 
         if let Some(employer) = &activity.employer {
@@ -124,7 +125,11 @@ impl StarBuilder {
         }
 
         // Extract metrics from metadata
-        if let Some(lines) = activity.metadata.get("lines_changed").and_then(|v| v.as_u64()) {
+        if let Some(lines) = activity
+            .metadata
+            .get("lines_changed")
+            .and_then(|v| v.as_u64())
+        {
             draft.metrics.push(Metric {
                 metric_type: "absolute".to_string(),
                 value: lines as f64,
@@ -132,7 +137,11 @@ impl StarBuilder {
             });
         }
 
-        if let Some(files) = activity.metadata.get("files_changed").and_then(|v| v.as_u64()) {
+        if let Some(files) = activity
+            .metadata
+            .get("files_changed")
+            .and_then(|v| v.as_u64())
+        {
             draft.metrics.push(Metric {
                 metric_type: "absolute".to_string(),
                 value: files as f64,
@@ -144,7 +153,11 @@ impl StarBuilder {
     }
 
     /// Convert a STAR story to an accomplishment
-    pub fn to_accomplishment(&self, story: &StarStory, activity_ids: Vec<String>) -> Accomplishment {
+    pub fn to_accomplishment(
+        &self,
+        story: &StarStory,
+        activity_ids: Vec<String>,
+    ) -> Accomplishment {
         Accomplishment {
             id: uuid::Uuid::new_v4().to_string(),
             title: self.generate_title(&story.action, &story.result),
@@ -155,12 +168,12 @@ impl StarBuilder {
             metrics: story.metrics.clone(),
             activity_ids,
             skills: story.skills.clone(),
-            themes: self.extract_themes(&story),
+            themes: self.extract_themes(story),
             employer: None,
             role: None,
             start_date: None,
             end_date: None,
-            generated_bullets: self.generate_bullets(&story),
+            generated_bullets: self.generate_bullets(story),
             generated_story: Some(story.full_narrative.clone()),
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
@@ -170,11 +183,14 @@ impl StarBuilder {
     fn compose_narrative(&self, situation: &str, task: &str, action: &str, result: &str) -> String {
         format!(
             "{}\n\nGiven this context, {}.\n\n{}\n\nAs a result, {}",
-            situation, task.to_lowercase(), action, result.to_lowercase()
+            situation,
+            task.to_lowercase(),
+            action,
+            result.to_lowercase()
         )
     }
 
-    fn generate_title(&self, action: &str, result: &str) -> String {
+    fn generate_title(&self, action: &str, _result: &str) -> String {
         // Take the first meaningful phrase from action
         let action_start = action.split('.').next().unwrap_or(action);
         if action_start.len() > 60 {
@@ -205,10 +221,16 @@ impl StarBuilder {
                     bullets.push(format!("Achieved {}% {}", metric.value, metric.description));
                 }
                 "currency" => {
-                    bullets.push(format!("Generated ${} in {}", metric.value, metric.description));
+                    bullets.push(format!(
+                        "Generated ${} in {}",
+                        metric.value, metric.description
+                    ));
                 }
                 "time" => {
-                    bullets.push(format!("Reduced {} by {} hours", metric.description, metric.value));
+                    bullets.push(format!(
+                        "Reduced {} by {} hours",
+                        metric.description, metric.value
+                    ));
                 }
                 _ => {
                     bullets.push(format!("{} {}", metric.value, metric.description));
@@ -224,22 +246,64 @@ impl StarBuilder {
         let full_text = format!(
             "{} {} {} {}",
             story.situation, story.task, story.action, story.result
-        ).to_lowercase();
+        )
+        .to_lowercase();
 
         // Common themes detection
         let theme_patterns: &[(&str, &[&str])] = &[
-            ("performance", &["performance", "optimization", "speed", "latency", "throughput"]),
-            ("scalability", &["scale", "scaling", "distributed", "microservice"]),
-            ("reliability", &["reliability", "uptime", "availability", "resilient"]),
-            ("security", &["security", "authentication", "authorization", "vulnerability"]),
-            ("infrastructure", &["infrastructure", "deploy", "ci/cd", "kubernetes", "docker"]),
-            ("data", &["data", "database", "analytics", "pipeline", "etl"]),
-            ("frontend", &["frontend", "ui", "ux", "react", "angular", "vue"]),
+            (
+                "performance",
+                &[
+                    "performance",
+                    "optimization",
+                    "speed",
+                    "latency",
+                    "throughput",
+                ],
+            ),
+            (
+                "scalability",
+                &["scale", "scaling", "distributed", "microservice"],
+            ),
+            (
+                "reliability",
+                &["reliability", "uptime", "availability", "resilient"],
+            ),
+            (
+                "security",
+                &[
+                    "security",
+                    "authentication",
+                    "authorization",
+                    "vulnerability",
+                ],
+            ),
+            (
+                "infrastructure",
+                &["infrastructure", "deploy", "ci/cd", "kubernetes", "docker"],
+            ),
+            (
+                "data",
+                &["data", "database", "analytics", "pipeline", "etl"],
+            ),
+            (
+                "frontend",
+                &["frontend", "ui", "ux", "react", "angular", "vue"],
+            ),
             ("backend", &["backend", "api", "server", "rest", "graphql"]),
-            ("mobile", &["mobile", "ios", "android", "react native", "flutter"]),
+            (
+                "mobile",
+                &["mobile", "ios", "android", "react native", "flutter"],
+            ),
             ("testing", &["test", "testing", "qa", "automation"]),
-            ("documentation", &["documentation", "docs", "readme", "wiki"]),
-            ("collaboration", &["team", "collaborate", "coordinate", "stakeholder"]),
+            (
+                "documentation",
+                &["documentation", "docs", "readme", "wiki"],
+            ),
+            (
+                "collaboration",
+                &["team", "collaborate", "coordinate", "stakeholder"],
+            ),
             ("mentorship", &["mentor", "coach", "train", "onboard"]),
             ("leadership", &["lead", "manage", "direct", "spearhead"]),
         ];

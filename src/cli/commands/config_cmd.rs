@@ -14,7 +14,8 @@ pub fn run(key: Option<String>, value: Option<String>, list: bool) -> Result<()>
 
         for key in Config::list_keys() {
             let current = config.get(key).unwrap_or_else(|| "(not set)".to_string());
-            let display = if key.contains("token") || key.contains("key") || key.contains("api_key") {
+            let display = if key.contains("token") || key.contains("key") || key.contains("api_key")
+            {
                 if current == "(not set)" {
                     current
                 } else {
@@ -26,7 +27,10 @@ pub fn run(key: Option<String>, value: Option<String>, list: bool) -> Result<()>
             println!("  {} = {}", key.cyan(), display.dimmed());
         }
         println!();
-        println!("{}", "Use `folio config <key> <value>` to set a value".dimmed());
+        println!(
+            "{}",
+            "Use `folio config <key> <value>` to set a value".dimmed()
+        );
         return Ok(());
     }
 
@@ -43,11 +47,12 @@ pub fn run(key: Option<String>, value: Option<String>, list: bool) -> Result<()>
             match config.get(&k) {
                 Some(v) => {
                     // Mask sensitive values
-                    let display = if k.contains("token") || k.contains("key") || k.contains("api_key") {
-                        format!("{}...", &v[..v.len().min(8)])
-                    } else {
-                        v
-                    };
+                    let display =
+                        if k.contains("token") || k.contains("key") || k.contains("api_key") {
+                            format!("{}...", &v[..v.len().min(8)])
+                        } else {
+                            v
+                        };
                     println!("{} = {}", k.cyan(), display);
                 }
                 None => {
@@ -96,8 +101,7 @@ pub fn init() -> Result<()> {
     let mut config = Config::load()?;
 
     // Git email
-    let default_email = crate::integrations::git::get_git_user_email()
-        .unwrap_or_else(|| "".to_string());
+    let default_email = crate::integrations::git::get_git_user_email().unwrap_or_default();
     println!("{}", "Git Configuration".yellow().bold());
     print!("Git email [{}]: ", default_email.dimmed());
     io::stdout().flush()?;
