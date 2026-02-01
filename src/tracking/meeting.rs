@@ -4,10 +4,9 @@
 //! accomplishments, action items, and key contributions.
 
 use anyhow::{Context, Result};
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 use crate::types::{Activity, ActivitySource, ActivityType, Importance};
 
@@ -278,7 +277,7 @@ impl MeetingAnalyzer {
     /// Extract key points from text
     fn extract_key_points(&self, text: &str) -> Vec<String> {
         let mut points = Vec::new();
-        let sentences: Vec<&str> = text.split(|c| c == '.' || c == '!' || c == '?').collect();
+        let sentences: Vec<&str> = text.split(['.', '!', '?']).collect();
 
         for sentence in sentences {
             let sentence = sentence.trim();
@@ -313,7 +312,7 @@ impl MeetingAnalyzer {
     /// Extract decisions from text
     fn extract_decisions(&self, text: &str) -> Vec<Decision> {
         let mut decisions = Vec::new();
-        let sentences: Vec<&str> = text.split(|c| c == '.' || c == '!' || c == '?').collect();
+        let sentences: Vec<&str> = text.split(['.', '!', '?']).collect();
 
         for sentence in sentences {
             let sentence = sentence.trim();
@@ -338,7 +337,7 @@ impl MeetingAnalyzer {
     /// Extract action items from text
     fn extract_action_items(&self, text: &str) -> Vec<MeetingActionItem> {
         let mut items = Vec::new();
-        let sentences: Vec<&str> = text.split(|c| c == '.' || c == '!' || c == '?').collect();
+        let sentences: Vec<&str> = text.split(['.', '!', '?']).collect();
 
         for sentence in sentences {
             let sentence = sentence.trim();
@@ -366,15 +365,11 @@ impl MeetingAnalyzer {
     }
 
     /// Extract your contributions from a transcript
-    fn extract_contributions(
-        &self,
-        text: &str,
-        _attendees: &[String],
-    ) -> Vec<Contribution> {
+    fn extract_contributions(&self, text: &str, _attendees: &[String]) -> Vec<Contribution> {
         let mut contributions = Vec::new();
 
         // Find sentences where you're speaking or mentioned as contributing
-        let sentences: Vec<&str> = text.split(|c| c == '.' || c == '!' || c == '?').collect();
+        let sentences: Vec<&str> = text.split(['.', '!', '?']).collect();
 
         for sentence in sentences {
             let sentence = sentence.trim();
@@ -550,8 +545,7 @@ impl MeetingAnalyzer {
     /// Calculate importance based on meeting characteristics
     fn calculate_importance(&self, summary: &MeetingSummary) -> Importance {
         // High importance if you have action items or made contributions
-        if !summary.action_items.iter().any(|a| a.is_yours)
-            && summary.your_contributions.is_empty()
+        if !summary.action_items.iter().any(|a| a.is_yours) && summary.your_contributions.is_empty()
         {
             return Importance::Low;
         }
@@ -593,7 +587,8 @@ mod tests {
         let config = MeetingConfig::default();
         let analyzer = MeetingAnalyzer::new(config);
 
-        let text = "We decided to use Rust for the backend. The team agreed on the new architecture.";
+        let text =
+            "We decided to use Rust for the backend. The team agreed on the new architecture.";
         let decisions = analyzer.extract_decisions(text);
 
         assert_eq!(decisions.len(), 2);

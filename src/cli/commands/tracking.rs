@@ -6,9 +6,7 @@ use std::path::PathBuf;
 
 use crate::config::Config;
 use crate::db::Database;
-use crate::tracking::{
-    CalendarIntegration, MeetingAnalyzer, ScreenCapturer, TranscriptImporter,
-};
+use crate::tracking::{CalendarIntegration, MeetingAnalyzer, ScreenCapturer, TranscriptImporter};
 
 /// Import a transcript file
 pub fn import_transcript(
@@ -32,10 +30,7 @@ pub fn import_transcript(
     };
 
     transcript.source_file = Some(file.to_string_lossy().to_string());
-    transcript.title = title.or_else(|| {
-        file.file_stem()
-            .map(|s| s.to_string_lossy().to_string())
-    });
+    transcript.title = title.or_else(|| file.file_stem().map(|s| s.to_string_lossy().to_string()));
 
     let meeting_date = date
         .and_then(|d| NaiveDate::parse_from_str(&d, "%Y-%m-%d").ok())
@@ -47,7 +42,10 @@ pub fn import_transcript(
     let activity = importer.transcript_to_activity(&transcript, meeting_date);
     db.insert_activity(&activity)?;
 
-    println!("Imported transcript: {}", transcript.title.as_deref().unwrap_or("Untitled"));
+    println!(
+        "Imported transcript: {}",
+        transcript.title.as_deref().unwrap_or("Untitled")
+    );
     println!("  Segments: {}", transcript.segments.len());
     println!(
         "  Duration: {} minutes",
@@ -71,11 +69,7 @@ pub fn import_transcript(
 }
 
 /// Import a meeting summary
-pub fn import_meeting(
-    file: Option<PathBuf>,
-    title: Option<String>,
-    source: String,
-) -> Result<()> {
+pub fn import_meeting(file: Option<PathBuf>, title: Option<String>, source: String) -> Result<()> {
     let config = Config::load()?;
     let db = Database::open()?;
 
@@ -174,7 +168,10 @@ pub fn voice(_duration: Option<u32>, transcribe: bool) -> Result<()> {
     println!();
     println!("Current configuration:");
     println!("  Audio directory: {:?}", config.voice.audio_dir);
-    println!("  Transcription provider: {}", config.voice.transcription_provider);
+    println!(
+        "  Transcription provider: {}",
+        config.voice.transcription_provider
+    );
     println!("  Max duration: {}s", config.voice.max_duration_secs);
 
     if transcribe {
@@ -218,9 +215,26 @@ pub fn track(foreground: bool, stop: bool, status: bool) -> Result<()> {
 
     if status {
         println!("Activity Tracking Status:");
-        println!("  Active window tracking: {}", if config.active_window.enabled { "enabled" } else { "disabled" });
-        println!("  Browser tracking: {}", if config.browser.enabled { "enabled" } else { "disabled" });
-        println!("  Poll interval: {}s", config.active_window.poll_interval_secs);
+        println!(
+            "  Active window tracking: {}",
+            if config.active_window.enabled {
+                "enabled"
+            } else {
+                "disabled"
+            }
+        );
+        println!(
+            "  Browser tracking: {}",
+            if config.browser.enabled {
+                "enabled"
+            } else {
+                "disabled"
+            }
+        );
+        println!(
+            "  Poll interval: {}s",
+            config.active_window.poll_interval_secs
+        );
         return Ok(());
     }
 

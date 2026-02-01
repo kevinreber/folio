@@ -427,8 +427,10 @@ impl ActiveWindowTracker {
 
         for session in &self.accumulated_sessions {
             let duration = Duration::seconds(session.duration_secs);
-            let entry = summary.entry(session.category.clone()).or_insert(Duration::zero());
-            *entry = *entry + duration;
+            let entry = summary
+                .entry(session.category.clone())
+                .or_insert(Duration::zero());
+            *entry += duration;
         }
 
         summary
@@ -493,7 +495,13 @@ mod tests {
             process_path: None,
         };
 
-        assert_eq!(tracker.session_importance(&short_dev_session), Importance::Low);
-        assert_eq!(tracker.session_importance(&long_dev_session), Importance::High);
+        assert_eq!(
+            tracker.session_importance(&short_dev_session),
+            Importance::Low
+        );
+        assert_eq!(
+            tracker.session_importance(&long_dev_session),
+            Importance::High
+        );
     }
 }

@@ -5,7 +5,6 @@
 
 use anyhow::Result;
 use chrono::{DateTime, Duration, Utc};
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -38,7 +37,10 @@ impl Default for BrowserConfig {
         site_categories.insert("gitlab.com".to_string(), "development".to_string());
         site_categories.insert("stackoverflow.com".to_string(), "development".to_string());
         site_categories.insert("docs.rs".to_string(), "documentation".to_string());
-        site_categories.insert("developer.mozilla.org".to_string(), "documentation".to_string());
+        site_categories.insert(
+            "developer.mozilla.org".to_string(),
+            "documentation".to_string(),
+        );
         site_categories.insert("rust-lang.org".to_string(), "documentation".to_string());
         // Communication
         site_categories.insert("slack.com".to_string(), "communication".to_string());
@@ -47,7 +49,10 @@ impl Default for BrowserConfig {
         // Productivity
         site_categories.insert("notion.so".to_string(), "documentation".to_string());
         site_categories.insert("linear.app".to_string(), "project_management".to_string());
-        site_categories.insert("jira.atlassian.com".to_string(), "project_management".to_string());
+        site_categories.insert(
+            "jira.atlassian.com".to_string(),
+            "project_management".to_string(),
+        );
 
         Self {
             enabled: false,
@@ -106,8 +111,12 @@ impl BrowserTracker {
     }
 
     /// Process a new URL/title observation
-    pub fn observe(&mut self, url: Option<&str>, title: Option<&str>) -> Result<Option<BrowserSession>> {
-        let domain = url.and_then(|u| extract_domain(u));
+    pub fn observe(
+        &mut self,
+        url: Option<&str>,
+        title: Option<&str>,
+    ) -> Result<Option<BrowserSession>> {
+        let domain = url.and_then(extract_domain);
 
         // Check if this should be tracked
         let should_track = match &domain {
@@ -124,7 +133,7 @@ impl BrowserTracker {
         let path = if self.config.domains_only {
             None
         } else {
-            url.and_then(|u| extract_path(u))
+            url.and_then(extract_path)
         };
         let category = self.categorize_domain(&domain);
 
@@ -140,9 +149,7 @@ impl BrowserTracker {
                 Ok(None)
             }
             Some(session) => {
-                if session.domain == domain
-                    && (self.config.domains_only || session.path == path)
-                {
+                if session.domain == domain && (self.config.domains_only || session.path == path) {
                     // Same page, update title if changed
                     if title.is_some() {
                         session.title = title.map(|s| s.to_string());
@@ -442,7 +449,10 @@ mod tests {
         let tracker = BrowserTracker::new(BrowserConfig::default());
 
         assert_eq!(tracker.categorize_domain("github.com"), "development");
-        assert_eq!(tracker.categorize_domain("stackoverflow.com"), "development");
+        assert_eq!(
+            tracker.categorize_domain("stackoverflow.com"),
+            "development"
+        );
         assert_eq!(tracker.categorize_domain("docs.rs"), "documentation");
     }
 

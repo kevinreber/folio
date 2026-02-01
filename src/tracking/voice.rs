@@ -79,8 +79,7 @@ pub struct VoiceNoteCapture {
 impl VoiceNoteCapture {
     pub fn new(config: VoiceConfig) -> Result<Self> {
         // Ensure audio directory exists
-        std::fs::create_dir_all(&config.audio_dir)
-            .context("Failed to create audio directory")?;
+        std::fs::create_dir_all(&config.audio_dir).context("Failed to create audio directory")?;
 
         Ok(Self {
             config,
@@ -105,10 +104,7 @@ impl VoiceNoteCapture {
         }
 
         let note_id = uuid::Uuid::new_v4().to_string();
-        let file_path = self
-            .config
-            .audio_dir
-            .join(format!("{}.wav", note_id));
+        let file_path = self.config.audio_dir.join(format!("{}.wav", note_id));
 
         let spec = WavSpec {
             channels: self.config.channels,
@@ -189,7 +185,10 @@ impl VoiceNoteCapture {
             .extension()
             .and_then(|e| e.to_str())
             .unwrap_or("wav");
-        let dest_path = self.config.audio_dir.join(format!("{}.{}", note_id, extension));
+        let dest_path = self
+            .config
+            .audio_dir
+            .join(format!("{}.{}", note_id, extension));
 
         std::fs::copy(source_path, &dest_path)?;
 
@@ -231,7 +230,13 @@ impl VoiceNoteCapture {
             .part(
                 "file",
                 reqwest::multipart::Part::bytes(file_bytes)
-                    .file_name(note.file_path.file_name().unwrap().to_string_lossy().to_string())
+                    .file_name(
+                        note.file_path
+                            .file_name()
+                            .unwrap()
+                            .to_string_lossy()
+                            .to_string(),
+                    )
                     .mime_str("audio/wav")?,
             )
             .text("model", "whisper-1");

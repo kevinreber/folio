@@ -17,12 +17,7 @@ pub mod transcript;
 pub mod voice;
 
 pub use active_window::ActiveWindowTracker;
-pub use browser::BrowserTracker;
 pub use calendar::CalendarIntegration;
-pub use idle::IdleDetector;
 pub use meeting::MeetingAnalyzer;
-pub use project_detection::ProjectDetector;
 pub use screen_capture::ScreenCapturer;
-pub use session::SessionGrouper;
 pub use transcript::TranscriptImporter;
-pub use voice::VoiceNoteCapture;

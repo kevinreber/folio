@@ -130,8 +130,7 @@ impl SessionGrouper {
         // Don't forget the last session
         if let Some(session) = current_session {
             if let Some(completed) = session.build() {
-                if completed.total_duration.num_minutes()
-                    >= self.config.min_session_minutes as i64
+                if completed.total_duration.num_minutes() >= self.config.min_session_minutes as i64
                 {
                     sessions.push(completed);
                 }
@@ -286,11 +285,7 @@ impl WorkSessionBuilder {
         }
 
         let total_duration = self.end_time - self.start_time;
-        let active_duration: Duration = self
-            .activities
-            .iter()
-            .filter_map(|a| a.duration)
-            .sum();
+        let active_duration: Duration = self.activities.iter().filter_map(|a| a.duration).sum();
 
         Some(WorkSession {
             id: self.id,
@@ -374,7 +369,13 @@ mod tests {
             create_test_activity("Afternoon work", 30, Some("folio")),
         ];
 
-        let grouper = SessionGrouper::new(SessionConfig::default());
+        // Use custom config with no minimum session duration to test gap splitting
+        let config = SessionConfig {
+            max_gap_minutes: 30,
+            min_session_minutes: 0,
+            cross_project_sessions: false,
+        };
+        let grouper = SessionGrouper::new(config);
         let sessions = grouper.group_activities(&activities);
 
         // Should be split because gap is > 30 minutes

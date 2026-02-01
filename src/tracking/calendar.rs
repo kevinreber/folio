@@ -276,7 +276,10 @@ mod tests {
         assert!(dt.is_some());
 
         let dt = dt.unwrap();
-        assert_eq!(dt.format("%Y-%m-%d %H:%M:%S").to_string(), "2024-01-15 10:00:00");
+        assert_eq!(
+            dt.format("%Y-%m-%d %H:%M:%S").to_string(),
+            "2024-01-15 10:00:00"
+        );
     }
 
     #[test]

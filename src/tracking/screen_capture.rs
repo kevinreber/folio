@@ -51,11 +51,11 @@ impl Default for ScreenCaptureConfig {
             enable_ocr: false,
             redact_patterns: vec![
                 r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b".to_string(), // emails
-                r"\b\d{3}-\d{2}-\d{4}\b".to_string(), // SSN
-                r"\b\d{16}\b".to_string(),            // credit card
-                r"password\s*[:=]\s*\S+".to_string(), // passwords
-                r"api[_-]?key\s*[:=]\s*\S+".to_string(), // API keys
-                r"token\s*[:=]\s*\S+".to_string(),    // tokens
+                r"\b\d{3}-\d{2}-\d{4}\b".to_string(),                               // SSN
+                r"\b\d{16}\b".to_string(),                                          // credit card
+                r"password\s*[:=]\s*\S+".to_string(),                               // passwords
+                r"api[_-]?key\s*[:=]\s*\S+".to_string(),                            // API keys
+                r"token\s*[:=]\s*\S+".to_string(),                                  // tokens
             ],
             auto_capture_interval_secs: 0,
         }
@@ -93,10 +93,10 @@ impl ScreenCapturer {
     /// Capture the screen
     pub fn capture(&self) -> Result<ScreenCapture> {
         let capture_id = uuid::Uuid::new_v4().to_string();
-        let file_path = self.config.capture_dir.join(format!(
-            "{}.{}",
-            capture_id, self.config.format
-        ));
+        let file_path = self
+            .config
+            .capture_dir
+            .join(format!("{}.{}", capture_id, self.config.format));
 
         #[cfg(feature = "desktop")]
         {
@@ -113,8 +113,7 @@ impl ScreenCapturer {
             let img = image::RgbaImage::from_raw(width, height, image.into_raw())
                 .context("Failed to create image")?;
 
-            img.save(&file_path)
-                .context("Failed to save screenshot")?;
+            img.save(&file_path).context("Failed to save screenshot")?;
 
             Ok(ScreenCapture {
                 id: capture_id,
@@ -165,7 +164,10 @@ impl ScreenCapturer {
             .extension()
             .and_then(|e| e.to_str())
             .unwrap_or("png");
-        let dest_path = self.config.capture_dir.join(format!("{}.{}", capture_id, extension));
+        let dest_path = self
+            .config
+            .capture_dir
+            .join(format!("{}.{}", capture_id, extension));
 
         std::fs::copy(source_path, &dest_path)?;
 
@@ -278,7 +280,10 @@ impl ScreenCapturer {
     /// Delete a capture
     pub fn delete_capture(&self, capture_id: &str) -> Result<bool> {
         for ext in &["png", "jpg", "jpeg"] {
-            let path = self.config.capture_dir.join(format!("{}.{}", capture_id, ext));
+            let path = self
+                .config
+                .capture_dir
+                .join(format!("{}.{}", capture_id, ext));
             if path.exists() {
                 std::fs::remove_file(path)?;
                 return Ok(true);

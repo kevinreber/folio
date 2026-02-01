@@ -439,7 +439,10 @@ impl Config {
                 if valid {
                     self.watcher.resume_notify_min_importance = value.to_lowercase();
                 } else {
-                    anyhow::bail!("Invalid importance level: {}. Use low, medium, or high.", value);
+                    anyhow::bail!(
+                        "Invalid importance level: {}. Use low, medium, or high.",
+                        value
+                    );
                 }
             }
             ["watcher", "auto_generate_bullets"] => {

@@ -3,7 +3,7 @@
 //! Imports transcripts from VTT, SRT, and text files.
 //! Supports extracting action items and key points.
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use chrono::{DateTime, Duration, Utc};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -288,7 +288,9 @@ impl TranscriptImporter {
         }
 
         // Boost for imperative verbs
-        let imperative_verbs = ["create", "update", "fix", "add", "remove", "send", "review", "check"];
+        let imperative_verbs = [
+            "create", "update", "fix", "add", "remove", "send", "review", "check",
+        ];
         for verb in imperative_verbs {
             if text_lower.contains(verb) {
                 score += 0.1;
@@ -387,7 +389,7 @@ fn parse_vtt_timestamp_line(line: &str) -> Option<(Duration, Duration)> {
     }
 
     let start = parse_vtt_timestamp(parts[0].trim())?;
-    let end = parse_vtt_timestamp(parts[1].trim().split_whitespace().next()?)?;
+    let end = parse_vtt_timestamp(parts[1].split_whitespace().next()?)?;
 
     Some((start, end))
 }
@@ -438,7 +440,10 @@ fn extract_speaker(text: &str) -> (Option<String>, String) {
     for pattern in patterns.into_iter().flatten() {
         if let Some(caps) = pattern.captures(text) {
             if let (Some(speaker), Some(content)) = (caps.get(1), caps.get(2)) {
-                return (Some(speaker.as_str().to_string()), content.as_str().to_string());
+                return (
+                    Some(speaker.as_str().to_string()),
+                    content.as_str().to_string(),
+                );
             }
         }
     }
