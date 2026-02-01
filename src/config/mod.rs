@@ -143,6 +143,12 @@ pub struct WatcherConfig {
     pub notifications: bool,
     /// Minimum significance score to notify
     pub notify_threshold: f32,
+    /// Enable resume update notifications
+    pub resume_notifications: bool,
+    /// Minimum importance level for resume notifications (low, medium, high)
+    pub resume_notify_min_importance: String,
+    /// Auto-generate resume bullets for significant activities
+    pub auto_generate_bullets: bool,
 }
 
 impl Default for GeneralConfig {
@@ -247,6 +253,9 @@ impl Default for WatcherConfig {
             interval_seconds: 300, // 5 minutes
             notifications: true,
             notify_threshold: 0.5,
+            resume_notifications: true,
+            resume_notify_min_importance: "medium".to_string(),
+            auto_generate_bullets: true,
         }
     }
 }
@@ -321,6 +330,16 @@ impl Config {
             ["ai", "model"] => Some(self.ai.model.clone()),
             ["watcher", "enabled"] => Some(self.watcher.enabled.to_string()),
             ["watcher", "interval_seconds"] => Some(self.watcher.interval_seconds.to_string()),
+            ["watcher", "notifications"] => Some(self.watcher.notifications.to_string()),
+            ["watcher", "resume_notifications"] => {
+                Some(self.watcher.resume_notifications.to_string())
+            }
+            ["watcher", "resume_notify_min_importance"] => {
+                Some(self.watcher.resume_notify_min_importance.clone())
+            }
+            ["watcher", "auto_generate_bullets"] => {
+                Some(self.watcher.auto_generate_bullets.to_string())
+            }
             _ => None,
         }
     }
@@ -408,6 +427,24 @@ impl Config {
             ["watcher", "interval_seconds"] => {
                 self.watcher.interval_seconds = value.parse().unwrap_or(300);
             }
+            ["watcher", "notifications"] => {
+                self.watcher.notifications = value.parse().unwrap_or(true);
+            }
+            ["watcher", "resume_notifications"] => {
+                self.watcher.resume_notifications = value.parse().unwrap_or(true);
+            }
+            ["watcher", "resume_notify_min_importance"] => {
+                // Validate the importance level
+                let valid = matches!(value.to_lowercase().as_str(), "low" | "medium" | "high");
+                if valid {
+                    self.watcher.resume_notify_min_importance = value.to_lowercase();
+                } else {
+                    anyhow::bail!("Invalid importance level: {}. Use low, medium, or high.", value);
+                }
+            }
+            ["watcher", "auto_generate_bullets"] => {
+                self.watcher.auto_generate_bullets = value.parse().unwrap_or(true);
+            }
             _ => {
                 anyhow::bail!("Unknown config key: {}", key);
             }
@@ -438,6 +475,10 @@ impl Config {
             "ai.api_key",
             "watcher.enabled",
             "watcher.interval_seconds",
+            "watcher.notifications",
+            "watcher.resume_notifications",
+            "watcher.resume_notify_min_importance",
+            "watcher.auto_generate_bullets",
         ]
     }
 }

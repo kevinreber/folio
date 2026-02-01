@@ -71,6 +71,9 @@ pulldown-cmark = "0.12"
 # Base64 encoding
 base64 = "0.22"
 
+# Desktop notifications
+notify-rust = "4"
+
 # Active window detection (Rize-style tracking) - optional due to X11 deps on Linux
 active-win-pos-rs = { version = "0.8", optional = true }
 

@@ -6,10 +6,12 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::time;
 
+use crate::ai::bullets::GeneratedBullet;
 use crate::config::Config;
 use crate::db::Database;
 use crate::integrations::{git::GitScanConfig, GitScanner};
-use crate::types::Activity;
+use crate::notifications::{ConsoleNotifier, FolioNotification, NotificationManager};
+use crate::types::{Activity, Importance};
 
 /// Background watcher that monitors git repositories for new commits
 pub struct Watcher {
@@ -17,6 +19,7 @@ pub struct Watcher {
     db: Arc<Mutex<Database>>,
     seen_commits: Arc<Mutex<HashSet<String>>>,
     last_scan: Arc<Mutex<DateTime<Utc>>>,
+    notification_manager: NotificationManager,
 }
 
 #[derive(Debug, Clone)]
@@ -31,6 +34,12 @@ pub struct WatcherConfig {
     pub min_lines_changed: usize,
     /// Enable desktop notifications
     pub notifications: bool,
+    /// Enable resume update notifications
+    pub resume_notifications: bool,
+    /// Minimum importance level for resume notifications
+    pub resume_notify_min_importance: Importance,
+    /// Auto-generate resume bullets for significant activities
+    pub auto_generate_bullets: bool,
     /// Callback for new activities
     pub on_activity: Option<fn(&Activity)>,
 }
@@ -43,6 +52,9 @@ impl Default for WatcherConfig {
             author_email: crate::integrations::git::get_git_user_email(),
             min_lines_changed: 10,
             notifications: true,
+            resume_notifications: true,
+            resume_notify_min_importance: Importance::Medium,
+            auto_generate_bullets: true,
             on_activity: None,
         }
     }
@@ -50,22 +62,39 @@ impl Default for WatcherConfig {
 
 impl Watcher {
     pub fn new(config: WatcherConfig, db: Database) -> Self {
+        let notification_manager = NotificationManager::with_settings(
+            config.notifications,
+            config.resume_notifications,
+            config.resume_notify_min_importance.clone(),
+        );
+
         Self {
             config,
             db: Arc::new(Mutex::new(db)),
             seen_commits: Arc::new(Mutex::new(HashSet::new())),
             last_scan: Arc::new(Mutex::new(Utc::now())),
+            notification_manager,
         }
     }
 
     /// Load configuration from app config
     pub fn from_config(app_config: &Config, db: Database) -> Self {
+        // Parse the importance level from config string
+        let min_importance = app_config
+            .watcher
+            .resume_notify_min_importance
+            .parse()
+            .unwrap_or(Importance::Medium);
+
         let config = WatcherConfig {
             watch_dirs: app_config.git.scan_dirs.clone(),
             interval_seconds: app_config.watcher.interval_seconds,
             author_email: app_config.general.git_email.clone(),
             min_lines_changed: app_config.git.min_lines_changed,
             notifications: app_config.watcher.notifications,
+            resume_notifications: app_config.watcher.resume_notifications,
+            resume_notify_min_importance: min_importance,
+            auto_generate_bullets: app_config.watcher.auto_generate_bullets,
             on_activity: None,
         };
 
@@ -158,9 +187,10 @@ impl Watcher {
                     continue;
                 }
 
-                // Notify
+                // Notify and potentially generate resume bullets
                 if self.config.notifications {
-                    self.notify(&activity);
+                    let _bullets = self.notify(&activity);
+                    // TODO: Optionally store bullets in database for later retrieval
                 }
 
                 // Callback
@@ -182,16 +212,33 @@ impl Watcher {
         Ok(new_activities)
     }
 
-    fn notify(&self, activity: &Activity) {
-        // Print to console for now
-        // In a full implementation, this would send desktop notifications
-        println!("\n📝 New activity captured!");
-        println!("   Title: {}", activity.title);
-        if let Some(project) = &activity.project {
-            println!("   Project: {}", project);
+    fn notify(&self, activity: &Activity) -> Option<Vec<GeneratedBullet>> {
+        // Always print to console
+        ConsoleNotifier::notify(&FolioNotification::ActivityCaptured {
+            activity: activity.clone(),
+        });
+
+        // Process activity for resume updates if configured
+        if self.config.auto_generate_bullets {
+            match self.notification_manager.process_activity(activity) {
+                Ok(Some(bullets)) => {
+                    // Also print to console for visibility
+                    ConsoleNotifier::notify(&FolioNotification::ResumeUpdated {
+                        activity_title: activity.title.clone(),
+                        bullets: bullets.clone(),
+                    });
+                    return Some(bullets);
+                }
+                Ok(None) => {
+                    // Activity wasn't significant enough for resume update
+                }
+                Err(e) => {
+                    eprintln!("Failed to send notification: {}", e);
+                }
+            }
         }
-        println!("   Importance: {}", activity.importance);
-        println!();
+
+        None
     }
 
     /// Get watcher status
@@ -205,6 +252,8 @@ impl Watcher {
             interval_seconds: self.config.interval_seconds,
             commits_tracked: seen.len(),
             last_scan,
+            resume_notifications_enabled: self.config.resume_notifications,
+            auto_generate_bullets: self.config.auto_generate_bullets,
         }
     }
 }
@@ -216,6 +265,8 @@ pub struct WatcherStatus {
     pub interval_seconds: u64,
     pub commits_tracked: usize,
     pub last_scan: DateTime<Utc>,
+    pub resume_notifications_enabled: bool,
+    pub auto_generate_bullets: bool,
 }
 
 /// Run the watcher as a background daemon

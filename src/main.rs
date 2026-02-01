@@ -7,6 +7,7 @@ mod config;
 mod db;
 mod export;
 mod integrations;
+mod notifications;
 mod server;
 mod tracking;
 mod tui;
