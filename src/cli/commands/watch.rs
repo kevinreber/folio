@@ -44,6 +44,31 @@ pub fn run(daemon: bool) -> Result<()> {
             "disabled"
         }
     );
+    println!(
+        "{} {}",
+        "Resume notifications:".dimmed(),
+        if config.watcher.resume_notifications {
+            "enabled"
+        } else {
+            "disabled"
+        }
+    );
+    if config.watcher.resume_notifications {
+        println!(
+            "{} {} importance or higher",
+            "Resume notify threshold:".dimmed(),
+            config.watcher.resume_notify_min_importance
+        );
+        println!(
+            "{} {}",
+            "Auto-generate bullets:".dimmed(),
+            if config.watcher.auto_generate_bullets {
+                "enabled"
+            } else {
+                "disabled"
+            }
+        );
+    }
     println!();
 
     if daemon {

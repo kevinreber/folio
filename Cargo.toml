@@ -71,5 +71,8 @@ pulldown-cmark = "0.12"
 # Base64 encoding
 base64 = "0.22"
 
+# Desktop notifications
+notify-rust = "4"
+
 [dev-dependencies]
 tempfile = "3"
