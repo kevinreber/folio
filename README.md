@@ -71,12 +71,38 @@ See the [Architecture documentation](https://kevinreber.github.io/folio/docs/arc
 
 ## Installation
 
-```bash
-# Build from source
-cargo build --release
+### Quick Install (Recommended)
 
-# Install globally
-cargo install --path .
+Install with a single command:
+
+```bash
+curl -sSf https://raw.githubusercontent.com/kevinreber/folio/main/install.sh | sh
+```
+
+This will:
+- Check for Rust (install via rustup if missing)
+- Clone and build the project
+- Install the binary to `~/.local/bin/`
+- Optionally run initial configuration
+
+### Other Installation Options
+
+```bash
+# Clone and use make
+git clone https://github.com/kevinreber/folio.git
+cd folio
+make install
+
+# Or build manually
+cargo build --release
+cp target/release/folio ~/.local/bin/
+```
+
+### Uninstall
+
+```bash
+curl -sSf https://raw.githubusercontent.com/kevinreber/folio/main/install.sh | sh -s -- --uninstall
+# Or manually: rm ~/.local/bin/folio
 ```
 
 ## Quick Start
