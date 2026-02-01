@@ -12,6 +12,7 @@ mod serve;
 mod show;
 mod stats;
 mod sync;
+mod tracking;
 mod tui_cmd;
 mod watch;
 
@@ -29,5 +30,8 @@ pub use serve::{run_api as serve_api, run_mcp as serve_mcp};
 pub use show::run as show;
 pub use stats::run as stats;
 pub use sync::run as sync;
+pub use tracking::{
+    import_calendar, import_meeting, import_transcript, screen_capture, track, voice,
+};
 pub use tui_cmd::run as tui;
 pub use watch::run as watch;

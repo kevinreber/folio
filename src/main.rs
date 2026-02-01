@@ -9,6 +9,7 @@ mod export;
 mod integrations;
 mod notifications;
 mod server;
+mod tracking;
 mod tui;
 mod types;
 mod watcher;
@@ -109,5 +110,33 @@ fn main() -> Result<()> {
         }
 
         Commands::Watch { daemon } => cli::commands::watch(daemon),
+
+        Commands::ImportTranscript {
+            file,
+            title,
+            date,
+            extract_actions,
+        } => cli::commands::import_transcript(file, title, date, extract_actions),
+
+        Commands::ImportMeeting {
+            file,
+            title,
+            source,
+        } => cli::commands::import_meeting(file, title, source),
+
+        Commands::ImportCalendar { file, days } => cli::commands::import_calendar(file, days),
+
+        Commands::Voice {
+            duration,
+            transcribe,
+        } => cli::commands::voice(duration, transcribe),
+
+        Commands::ScreenCapture { title } => cli::commands::screen_capture(title),
+
+        Commands::Track {
+            foreground,
+            stop,
+            status,
+        } => cli::commands::track(foreground, stop, status),
     }
 }

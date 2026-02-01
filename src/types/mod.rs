@@ -10,6 +10,13 @@ pub enum ActivitySource {
     Jira,
     Manual,
     ScreenCapture,
+    // New sources for enhanced tracking
+    ActiveWindow,
+    Calendar,
+    Transcript,
+    VoiceNote,
+    Meeting,
+    Browser,
 }
 
 impl std::fmt::Display for ActivitySource {
@@ -21,6 +28,12 @@ impl std::fmt::Display for ActivitySource {
             Self::Jira => write!(f, "jira"),
             Self::Manual => write!(f, "manual"),
             Self::ScreenCapture => write!(f, "screen_capture"),
+            Self::ActiveWindow => write!(f, "active_window"),
+            Self::Calendar => write!(f, "calendar"),
+            Self::Transcript => write!(f, "transcript"),
+            Self::VoiceNote => write!(f, "voice_note"),
+            Self::Meeting => write!(f, "meeting"),
+            Self::Browser => write!(f, "browser"),
         }
     }
 }
@@ -36,6 +49,12 @@ impl std::str::FromStr for ActivitySource {
             "jira" => Ok(Self::Jira),
             "manual" => Ok(Self::Manual),
             "screen_capture" => Ok(Self::ScreenCapture),
+            "active_window" => Ok(Self::ActiveWindow),
+            "calendar" => Ok(Self::Calendar),
+            "transcript" => Ok(Self::Transcript),
+            "voice_note" => Ok(Self::VoiceNote),
+            "meeting" => Ok(Self::Meeting),
+            "browser" => Ok(Self::Browser),
             _ => Err(anyhow::anyhow!("Unknown source: {}", s)),
         }
     }
@@ -51,6 +70,15 @@ pub enum ActivityType {
     Deploy,
     Incident,
     ManualEntry,
+    // New activity types for enhanced tracking
+    WindowSession,
+    BrowserSession,
+    CalendarEvent,
+    TranscriptSegment,
+    VoiceNote,
+    MeetingSummary,
+    ActionItem,
+    WorkSession,
 }
 
 impl std::fmt::Display for ActivityType {
@@ -63,6 +91,14 @@ impl std::fmt::Display for ActivityType {
             Self::Deploy => write!(f, "deploy"),
             Self::Incident => write!(f, "incident"),
             Self::ManualEntry => write!(f, "manual_entry"),
+            Self::WindowSession => write!(f, "window_session"),
+            Self::BrowserSession => write!(f, "browser_session"),
+            Self::CalendarEvent => write!(f, "calendar_event"),
+            Self::TranscriptSegment => write!(f, "transcript_segment"),
+            Self::VoiceNote => write!(f, "voice_note"),
+            Self::MeetingSummary => write!(f, "meeting_summary"),
+            Self::ActionItem => write!(f, "action_item"),
+            Self::WorkSession => write!(f, "work_session"),
         }
     }
 }
@@ -79,6 +115,14 @@ impl std::str::FromStr for ActivityType {
             "deploy" => Ok(Self::Deploy),
             "incident" => Ok(Self::Incident),
             "manual_entry" => Ok(Self::ManualEntry),
+            "window_session" => Ok(Self::WindowSession),
+            "browser_session" => Ok(Self::BrowserSession),
+            "calendar_event" => Ok(Self::CalendarEvent),
+            "transcript_segment" => Ok(Self::TranscriptSegment),
+            "voice_note" => Ok(Self::VoiceNote),
+            "meeting_summary" => Ok(Self::MeetingSummary),
+            "action_item" => Ok(Self::ActionItem),
+            "work_session" => Ok(Self::WorkSession),
             _ => Err(anyhow::anyhow!("Unknown activity type: {}", s)),
         }
     }

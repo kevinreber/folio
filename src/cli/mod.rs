@@ -250,4 +250,80 @@ pub enum Commands {
         #[arg(short, long)]
         daemon: bool,
     },
+
+    /// Import a transcript file (VTT, SRT, or plain text)
+    ImportTranscript {
+        /// Path to the transcript file
+        file: PathBuf,
+
+        /// Title for the transcript/meeting
+        #[arg(short, long)]
+        title: Option<String>,
+
+        /// Meeting date (YYYY-MM-DD format)
+        #[arg(short, long)]
+        date: Option<String>,
+
+        /// Extract action items from transcript
+        #[arg(long)]
+        extract_actions: bool,
+    },
+
+    /// Import a meeting summary (from Otter, Loom, or manual)
+    ImportMeeting {
+        /// Path to meeting summary file (JSON) or text
+        file: Option<PathBuf>,
+
+        /// Meeting title
+        #[arg(short, long)]
+        title: Option<String>,
+
+        /// Source format (otter, loom, manual)
+        #[arg(short, long, default_value = "manual")]
+        source: String,
+    },
+
+    /// Import calendar events
+    ImportCalendar {
+        /// Path to ICS file
+        file: PathBuf,
+
+        /// Only import events from the last N days
+        #[arg(short, long)]
+        days: Option<u32>,
+    },
+
+    /// Record a voice note
+    Voice {
+        /// Duration limit in seconds
+        #[arg(short, long)]
+        duration: Option<u32>,
+
+        /// Transcribe using OpenAI Whisper
+        #[arg(long)]
+        transcribe: bool,
+    },
+
+    /// Capture the screen
+    #[command(alias = "screenshot")]
+    ScreenCapture {
+        /// Add a title/description
+        #[arg(short, long)]
+        title: Option<String>,
+    },
+
+    /// Start activity tracking (active window, idle detection)
+    Track {
+        /// Run in foreground (default: daemon mode)
+        #[arg(long)]
+        foreground: bool,
+
+        /// Stop tracking
+        #[arg(long)]
+        stop: bool,
+
+        /// Show tracking status
+        #[arg(long)]
+        status: bool,
+    },
 }

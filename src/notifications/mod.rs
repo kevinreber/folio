@@ -8,9 +8,7 @@ use crate::types::{Activity, Importance};
 #[derive(Debug, Clone)]
 pub enum FolioNotification {
     /// New activity was captured
-    ActivityCaptured {
-        activity: Activity,
-    },
+    ActivityCaptured { activity: Activity },
     /// Resume was updated with new bullet points
     ResumeUpdated {
         activity_title: String,
@@ -22,9 +20,7 @@ pub enum FolioNotification {
         significant_count: usize,
     },
     /// Reminder to capture work
-    CaptureReminder {
-        days_since_last: u32,
-    },
+    CaptureReminder { days_since_last: u32 },
 }
 
 /// Desktop notification manager for Folio
@@ -138,7 +134,10 @@ impl NotificationManager {
         };
 
         let body = if let Some(project) = &activity.project {
-            format!("{} {}\nProject: {}", importance_emoji, activity.title, project)
+            format!(
+                "{} {}\nProject: {}",
+                importance_emoji, activity.title, project
+            )
         } else {
             format!("{} {}", importance_emoji, activity.title)
         };
@@ -154,7 +153,11 @@ impl NotificationManager {
         Ok(())
     }
 
-    fn notify_resume_updated(&self, activity_title: &str, bullets: &[GeneratedBullet]) -> Result<()> {
+    fn notify_resume_updated(
+        &self,
+        activity_title: &str,
+        bullets: &[GeneratedBullet],
+    ) -> Result<()> {
         // Get the best bullet (highest confidence)
         let best_bullet = bullets
             .iter()

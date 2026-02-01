@@ -45,7 +45,7 @@ crossterm = "0.27"
 git2 = "0.19"
 
 # HTTP client for API integrations
-reqwest = { version = "0.12", features = ["json", "blocking"] }
+reqwest = { version = "0.12", features = ["json", "blocking", "multipart"] }
 url = "2"
 
 # Async runtime
@@ -73,6 +73,27 @@ base64 = "0.22"
 
 # Desktop notifications
 notify-rust = "4"
+
+# Active window detection (Rize-style tracking) - optional due to X11 deps on Linux
+active-win-pos-rs = { version = "0.8", optional = true }
+
+# Audio capture and processing (voice notes, transcription) - optional due to system deps
+cpal = { version = "0.15", optional = true }
+hound = "3.5"
+
+# Screen capture - optional due to X11 deps on Linux
+screenshots = { version = "0.8", optional = true }
+
+# Image processing (for OCR preprocessing)
+image = "0.25"
+
+# System idle time detection - optional due to X11 deps on Linux
+user-idle = { version = "0.6", optional = true }
+
+[features]
+default = []
+audio = ["cpal"]
+desktop = ["active-win-pos-rs", "screenshots", "user-idle"]
 
 [dev-dependencies]
 tempfile = "3"

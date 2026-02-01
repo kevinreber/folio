@@ -21,6 +21,20 @@ pub struct Config {
     pub export: ExportConfig,
     /// Watcher settings for background monitoring
     pub watcher: WatcherConfig,
+    /// Active window tracking settings
+    pub active_window: ActiveWindowConfig,
+    /// Calendar integration settings
+    pub calendar: CalendarConfig,
+    /// Browser tracking settings
+    pub browser: BrowserConfig,
+    /// Voice note settings
+    pub voice: VoiceConfig,
+    /// Screen capture settings
+    pub screen_capture: ScreenCaptureConfig,
+    /// Transcript import settings
+    pub transcript: TranscriptConfig,
+    /// Meeting analysis settings
+    pub meeting: MeetingConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -246,6 +260,15 @@ impl Default for WatcherConfig {
     }
 }
 
+// Re-export tracking config types
+pub use crate::tracking::active_window::ActiveWindowConfig;
+pub use crate::tracking::browser::BrowserConfig;
+pub use crate::tracking::calendar::CalendarConfig;
+pub use crate::tracking::meeting::MeetingConfig;
+pub use crate::tracking::screen_capture::ScreenCaptureConfig;
+pub use crate::tracking::transcript::TranscriptConfig;
+pub use crate::tracking::voice::VoiceConfig;
+
 impl Config {
     /// Get the config file path
     pub fn config_path() -> Result<PathBuf> {
@@ -416,7 +439,10 @@ impl Config {
                 if valid {
                     self.watcher.resume_notify_min_importance = value.to_lowercase();
                 } else {
-                    anyhow::bail!("Invalid importance level: {}. Use low, medium, or high.", value);
+                    anyhow::bail!(
+                        "Invalid importance level: {}. Use low, medium, or high.",
+                        value
+                    );
                 }
             }
             ["watcher", "auto_generate_bullets"] => {
