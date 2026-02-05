@@ -68,5 +68,6 @@ folio stats
 ## Next Steps
 
 - [Getting Started](/docs/getting-started) - Install Folio and capture your first accomplishment
+- [Onboarding Guide](/docs/onboarding) - Step-by-step guide with practical examples
 - [CLI Reference](/docs/cli-reference) - Complete command documentation
 - [Examples](/docs/examples/) - Real-world usage patterns
