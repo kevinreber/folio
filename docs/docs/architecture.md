@@ -55,8 +55,8 @@ Folio is structured as a layered pipeline: **Collection → Storage → Enrichme
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        INTERFACES                                    │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐               │
-│  │   CLI    │ │   TUI    │ │ Web UI   │ │   MCP    │               │
-│  │ (quick)  │ │ (review) │ │ (export) │ │ (Claude) │               │
+│  │   CLI    │ │   TUI    │ │  Web UI  │ │   MCP    │               │
+│  │ (quick)  │ │ (review) │ │(browser) │ │ (Claude) │               │
 │  └──────────┘ └──────────┘ └──────────┘ └──────────┘               │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -91,7 +91,13 @@ pub struct Activity {
 | `linear` | Linear API (issues, projects) |
 | `jira` | Jira tickets |
 | `screen_capture` | Screenshot with OCR |
-| `manual` | Manual entry via CLI |
+| `active_window` | Active application tracking |
+| `calendar` | Calendar events (ICS) |
+| `transcript` | Meeting transcripts (VTT, SRT) |
+| `voice_note` | Audio recordings |
+| `meeting` | Meeting summaries (Otter, Loom, etc.) |
+| `browser` | Browser history |
+| `manual` | Manual entry via CLI or web UI |
 
 ### Activity Types
 
@@ -104,6 +110,14 @@ pub struct Activity {
 | `deploy` | Production deployment |
 | `incident` | Incident response |
 | `manual_entry` | Manual capture |
+| `window_session` | Active application time |
+| `browser_session` | Website/documentation research |
+| `calendar_event` | Meeting or event |
+| `transcript_segment` | Meeting transcript segment |
+| `voice_note` | Audio note |
+| `meeting_summary` | Meeting summary |
+| `action_item` | Task extracted from meetings |
+| `work_session` | Grouped activity session |
 
 ### Accomplishment (Enriched)
 
@@ -211,38 +225,54 @@ Background detection prompts capture:
 | Language | Rust 2021 |
 | CLI Framework | clap 4 |
 | Database | SQLite (rusqlite) |
+| TUI | ratatui + crossterm |
+| Web Server | axum + tower-http |
+| Web UI | Vanilla HTML/CSS/JS (embedded via rust-embed) |
+| Git Integration | git2 |
+| HTTP Client | reqwest |
 | Serialization | serde + serde_json |
 | Date/Time | chrono |
 | Output | colored, tabled |
 
+### Web UI Architecture
+
+The web dashboard is a self-contained SPA embedded into the binary at compile time using `rust-embed`. This means:
+
+- **No separate build step** — the HTML/CSS/JS files in `web-ui/` are compiled into the Rust binary
+- **No runtime dependencies** — no Node.js, npm, or separate server process
+- **Single binary distribution** — `folio serve` serves both the API and the dashboard
+- **SPA routing** — unmatched routes fall back to `index.html` for client-side navigation
+
+The frontend communicates with the backend exclusively through the REST API (`/api/*` endpoints). The same API is available for other clients (scripts, integrations, MCP).
+
 ## Development Roadmap
 
-### Phase 1: Core Capture (Current)
+### Phase 1: Core Capture
 - [x] CLI with manual capture
 - [x] SQLite storage
-- [ ] Local git scanning
-- [ ] Basic bullet generation
+- [x] Local git scanning
+- [x] Basic bullet generation
 
 ### Phase 2: Smart Enrichment
-- [ ] GitHub API integration
-- [ ] Link enrichment
-- [ ] LLM-powered generation
-- [ ] Weekly review command
+- [x] GitHub API integration
+- [x] Link enrichment
+- [x] LLM-powered generation
+- [x] Weekly review/digest command
 
 ### Phase 3: Automation
-- [ ] Background git watcher
-- [ ] Screen capture
-- [ ] Auto-clustering
-- [ ] TUI for review
+- [x] Background git watcher
+- [x] Screen capture
+- [x] Activity tracking (active window, browser, idle detection)
+- [x] TUI for review
 
 ### Phase 4: Synthesis
-- [ ] STAR story generator
-- [ ] Review summary generator
-- [ ] MCP server for Claude
-- [ ] Export formats
+- [x] STAR story generator
+- [x] Review summary generator
+- [x] MCP server for Claude
+- [x] Export formats (markdown, JSON, YAML)
 
-### Phase 5: Polish
-- [ ] Web UI
+### Phase 5: Polish (Current)
+- [x] Web UI dashboard
+- [x] Job description matching
 - [ ] Multi-device sync
-- [ ] Job description matching
 - [ ] Interview prep mode

@@ -184,6 +184,25 @@ Navigate with arrow keys, press `Enter` to view details, and `q` to quit.
 
 ---
 
+## Step 6: Use the Web Dashboard
+
+If you prefer a graphical interface, Folio includes a built-in web dashboard:
+
+```bash
+folio serve --open
+```
+
+This starts the server and opens `http://127.0.0.1:3000` in your browser. The dashboard lets you:
+
+- **View stats** at a glance — totals, importance breakdown, activity by source
+- **Browse and filter** activities by importance or project
+- **Search** across all your activities
+- **Capture new activities** using a form instead of CLI commands
+
+The dashboard is great for non-technical users or when you want a visual overview of your career data.
+
+---
+
 ## Practical Examples
 
 Here are real-world examples to help you get started:
@@ -306,7 +325,10 @@ folio capture "Thing I forgot to capture earlier"
 | `delete` | Remove an activity | `folio delete abc123` |
 | `stats` | View statistics | `folio stats` |
 | `export` | Export data | `folio export --format json` |
-| `tui` | Open interactive UI | `folio tui` |
+| `tui` | Open terminal UI | `folio tui` |
+| `serve` | Start web dashboard + API | `folio serve --open` |
+| `sync` | Sync from git/GitHub/Linear | `folio sync --source git` |
+| `digest` | Generate activity summary | `folio digest weekly` |
 
 ---
 
