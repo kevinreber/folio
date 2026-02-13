@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Folio - Career Tracker</title>
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Sidebar -->
+    <nav id="sidebar">
+      <div class="sidebar-header">
+        <h1 class="logo">folio</h1>
+        <span class="logo-tagline">career tracker</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#" data-view="dashboard" class="nav-link active">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Dashboard
+        </a></li>
+        <li><a href="#" data-view="activities" class="nav-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Activities
+        </a></li>
+        <li><a href="#" data-view="search" class="nav-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Search
+        </a></li>
+        <li><a href="#" data-view="capture" class="nav-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Capture
+        </a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div id="health-status" class="status-dot disconnected"></div>
+        <span id="health-text">Connecting...</span>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="content">
+      <!-- Dashboard View -->
+      <section id="view-dashboard" class="view active">
+        <header class="view-header">
+          <h2>Dashboard</h2>
+          <p class="subtitle">Your career activity at a glance</p>
+        </header>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-total">--</div>
+            <div class="stat-label">Total Activities</div>
+          </div>
+          <div class="stat-card high">
+            <div class="stat-value" id="stat-high">--</div>
+            <div class="stat-label">High Impact</div>
+          </div>
+          <div class="stat-card medium">
+            <div class="stat-value" id="stat-medium">--</div>
+            <div class="stat-label">Medium Impact</div>
+          </div>
+          <div class="stat-card low">
+            <div class="stat-value" id="stat-low">--</div>
+            <div class="stat-label">Low Impact</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card">
+            <h3>Activity by Source</h3>
+            <div id="sources-chart" class="chart-container"></div>
+          </div>
+          <div class="card">
+            <h3>Recent Activity</h3>
+            <div id="recent-activities" class="activity-list compact"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Activities View -->
+      <section id="view-activities" class="view">
+        <header class="view-header">
+          <h2>Activities</h2>
+          <div class="view-controls">
+            <select id="filter-importance" class="select-input">
+              <option value="">All Importance</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+            <select id="filter-project" class="select-input">
+              <option value="">All Projects</option>
+            </select>
+            <button id="btn-refresh" class="btn btn-secondary" title="Refresh">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            </button>
+          </div>
+        </header>
+        <div id="activities-list" class="activity-list"></div>
+        <div id="activities-empty" class="empty-state hidden">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <p>No activities found</p>
+          <p class="muted">Capture your first activity to get started</p>
+        </div>
+      </section>
+
+      <!-- Search View -->
+      <section id="view-search" class="view">
+        <header class="view-header">
+          <h2>Search</h2>
+        </header>
+        <div class="search-bar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="search-input" placeholder="Search activities by title, description, or project..." autofocus>
+        </div>
+        <div id="search-results" class="activity-list"></div>
+        <div id="search-empty" class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <p>Search your activities</p>
+          <p class="muted">Find activities by keywords in title, description, or project name</p>
+        </div>
+      </section>
+
+      <!-- Capture View -->
+      <section id="view-capture" class="view">
+        <header class="view-header">
+          <h2>Capture Activity</h2>
+          <p class="subtitle">Record what you accomplished while it's fresh</p>
+        </header>
+        <form id="capture-form" class="form-card">
+          <div class="form-group">
+            <label for="capture-title">What did you do?</label>
+            <input type="text" id="capture-title" placeholder="e.g. Implemented new auth system with OAuth2" required>
+          </div>
+          <div class="form-group">
+            <label for="capture-description">Description <span class="optional">(optional)</span></label>
+            <textarea id="capture-description" rows="3" placeholder="Add more details about what you did..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="capture-impact">Impact <span class="optional">(optional)</span></label>
+              <input type="text" id="capture-impact" placeholder="e.g. Reduced login time by 50%">
+            </div>
+            <div class="form-group">
+              <label for="capture-importance">Importance</label>
+              <select id="capture-importance" class="select-input">
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="capture-project">Project <span class="optional">(optional)</span></label>
+              <input type="text" id="capture-project" placeholder="e.g. auth-service">
+            </div>
+            <div class="form-group">
+              <label for="capture-employer">Employer <span class="optional">(optional)</span></label>
+              <input type="text" id="capture-employer" placeholder="e.g. Acme Corp">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Capture Activity</button>
+            <button type="reset" class="btn btn-secondary">Clear</button>
+          </div>
+          <div id="capture-success" class="success-message hidden">
+            Activity captured successfully!
+          </div>
+        </form>
+      </section>
+
+      <!-- Activity Detail Modal -->
+      <div id="activity-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <button class="modal-close">&times;</button>
+          <div id="modal-body"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/assets/app.js"></script>
+</body>
+</html>

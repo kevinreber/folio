@@ -258,43 +258,224 @@ Delete? [y/N]
 
 ---
 
-## Coming Soon
+## serve
 
-These commands are planned for future releases:
+Start the Folio server with the web dashboard and REST API.
 
-### scan
-
-Scan a git repository for activities:
+### Usage
 
 ```bash
-folio scan /path/to/repo
-folio scan .              # Current directory
-folio scan ~/work/repos/  # Multiple repos
+folio serve [OPTIONS]
 ```
 
-### generate
+### Options
 
-Generate resume bullets and STAR stories:
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--host <HOST>` | `-H` | Host to bind to | `127.0.0.1` |
+| `--port <PORT>` | `-p` | Port to listen on | `3000` |
+| `--mcp` | | Start MCP server instead of REST API | `false` |
+| `--open` | | Open the dashboard in your default browser | `false` |
+
+### Examples
 
 ```bash
-folio generate bullets --employer "Acme Corp"
-folio generate stories --top 5
+# Start server with web dashboard
+folio serve
+
+# Start and open browser automatically
+folio serve --open
+
+# Use a custom port
+folio serve --port 8080
+
+# Bind to all interfaces (for LAN access)
+folio serve --host 0.0.0.0
+
+# Start MCP server for Claude integration
+folio serve --mcp
 ```
 
-### review
+### Web Dashboard
 
-Interactive weekly review:
+When running without `--mcp`, the server serves a web dashboard at the root URL alongside the REST API. The dashboard includes:
+
+- **Dashboard** — stats overview with activity counts by importance and source
+- **Activities** — filterable list of all activities
+- **Search** — full-text search across titles, descriptions, and projects
+- **Capture** — form to create new activities from the browser
+
+### REST API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/health` | Health check |
+| `GET` | `/api/activities` | List activities |
+| `POST` | `/api/activities` | Create activity |
+| `GET` | `/api/activities/:id` | Get activity by ID |
+| `PUT` | `/api/activities/:id` | Update activity |
+| `DELETE` | `/api/activities/:id` | Delete activity |
+| `GET` | `/api/activities/search?q=` | Search activities |
+| `GET` | `/api/stats` | Get statistics |
+| `GET` | `/api/export?format=` | Export data (json) |
+
+---
+
+## sync
+
+Sync activities from external sources.
+
+### Usage
 
 ```bash
-folio review --week
-folio review --month
+folio sync [OPTIONS]
 ```
 
-### export
+### Options
 
-Export your accomplishments:
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--source <SOURCE>` | `-s` | Source to sync from (git, github, linear, all) | all |
+| `--days <N>` | `-d` | Number of days to look back | `30` |
+| `--repo <PATH>` | `-r` | Specific repository path (for git) | |
+| `--dry-run` | | Show what would be synced | `false` |
+
+### Examples
 
 ```bash
-folio export --format markdown
-folio export --format json --employer "Acme Corp"
+# Sync from all sources
+folio sync
+
+# Sync just git commits from last 7 days
+folio sync --source git --days 7
+
+# Sync a specific repo
+folio sync --source git --repo ~/work/my-project
+
+# Preview what would be synced
+folio sync --dry-run
+```
+
+---
+
+## export
+
+Export activities and accomplishments.
+
+### Usage
+
+```bash
+folio export [OPTIONS]
+```
+
+### Options
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--format <FORMAT>` | `-f` | Export format (markdown, json, yaml) | `markdown` |
+| `--output <FILE>` | `-o` | Output file (stdout if not specified) | |
+| `--brag` | | Export as brag document | `false` |
+| `--bullets` | | Export as resume bullets | `false` |
+
+### Examples
+
+```bash
+# Export as markdown to stdout
+folio export
+
+# Export as JSON to a file
+folio export --format json --output activities.json
+
+# Generate a brag document
+folio export --brag --output brag-doc.md
+```
+
+---
+
+## promote
+
+Promote an activity to a polished STAR-format accomplishment.
+
+### Usage
+
+```bash
+folio promote <ID> [OPTIONS]
+```
+
+### Options
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--interactive` | `-i` | Interactive mode for detailed STAR story |
+
+### Examples
+
+```bash
+# Promote an activity
+folio promote a1b2c3d4
+
+# Interactive STAR story building
+folio promote a1b2c3d4 --interactive
+```
+
+---
+
+## digest
+
+Generate a summary of your activities over a time period.
+
+### Usage
+
+```bash
+folio digest [PERIOD] [OPTIONS]
+```
+
+### Arguments
+
+| Argument | Description | Default |
+|----------|-------------|---------|
+| `[PERIOD]` | Time period: daily, weekly, monthly, quarterly, yearly | `weekly` |
+
+### Options
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--markdown` | `-m` | Output as markdown |
+
+### Examples
+
+```bash
+# Weekly digest
+folio digest
+
+# Monthly summary in markdown
+folio digest monthly --markdown
+```
+
+---
+
+## review
+
+Generate a performance review summary.
+
+### Usage
+
+```bash
+folio review [OPTIONS]
+```
+
+### Options
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--months <N>` | `-m` | Number of months to include | `6` |
+
+### Examples
+
+```bash
+# Last 6 months
+folio review
+
+# Last year
+folio review --months 12
 ```

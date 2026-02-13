@@ -229,7 +229,7 @@ pub enum Commands {
     #[command(alias = "ui")]
     Tui,
 
-    /// Start the REST API server
+    /// Start the REST API server with web dashboard
     Serve {
         /// Host to bind to
         #[arg(short = 'H', long, default_value = "127.0.0.1")]
@@ -242,6 +242,10 @@ pub enum Commands {
         /// Start MCP server instead of REST API
         #[arg(long)]
         mcp: bool,
+
+        /// Open the dashboard in your default browser
+        #[arg(long)]
+        open: bool,
     },
 
     /// Watch for new git commits and capture them automatically

@@ -27,6 +27,7 @@ A prompted work journal that enriches itself when possible — capturing accompl
 - **Capture** your professional work while it's fresh (commits, PRs, manual entries)
 - **Enrich** that data with impact metrics and context
 - **Package** accomplishments into interview-ready content (resume bullets, STAR stories, performance review summaries)
+- **Web Dashboard** to browse, search, and capture activities from a browser — no terminal needed
 
 ## Quick Example
 
@@ -42,6 +43,9 @@ folio list
 
 # Get detailed stats
 folio stats
+
+# Open the web dashboard in your browser
+folio serve --open
 ```
 
 ## Key Principles

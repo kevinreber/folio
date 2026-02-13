@@ -156,6 +156,27 @@ Folio stores all your data locally in a SQLite database:
 
 This file contains your entire career history and can be backed up or moved between machines.
 
+## Using the Web Dashboard
+
+If you prefer a visual interface over the terminal, Folio includes a built-in web dashboard:
+
+```bash
+folio serve --open
+```
+
+This starts the server and opens the dashboard in your browser at `http://127.0.0.1:3000`. From the dashboard you can:
+
+- **View stats** — see totals, importance breakdown, and activity by source
+- **Browse activities** — filter by importance or project
+- **Search** — find activities by keyword across titles, descriptions, and projects
+- **Capture** — add new activities using a form instead of the CLI
+
+The dashboard runs on the same server as the REST API, so there's nothing extra to install.
+
+:::tip For Non-Technical Users
+The web dashboard is the easiest way to use Folio without learning CLI commands. Just run `folio serve --open` and bookmark the page.
+:::
+
 ## Next Steps
 
 Now that you've captured your first accomplishments:
