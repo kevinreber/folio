@@ -585,6 +585,27 @@ html, body {
   font-size: 13px;
 }
 
+/* --- Error Message --- */
+.error-message {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: var(--high-bg);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  border-radius: var(--radius);
+  color: var(--high);
+  font-weight: 500;
+  font-size: 13px;
+}
+
+/* --- Edit Form in Modal --- */
+.edit-form .form-group {
+  margin-bottom: 16px;
+}
+
+.edit-form .form-row {
+  gap: 12px;
+}
+
 /* --- Modal --- */
 .modal {
   position: fixed;

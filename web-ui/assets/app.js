@@ -29,6 +29,16 @@ const api = {
     return res.json();
   },
 
+  async put(path, body) {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return res.json();
+  },
+
   async del(path) {
     const res = await fetch(`${API_BASE}${path}`, { method: 'DELETE' });
     if (!res.ok) throw new Error(`API error: ${res.status}`);
@@ -54,6 +64,10 @@ const api = {
 
   async createActivity(data) {
     return this.post('/activities', data);
+  },
+
+  async updateActivity(id, data) {
+    return this.put(`/activities/${id}`, data);
   },
 
   async deleteActivity(id) {
@@ -222,9 +236,55 @@ function renderActivityDetail(activity) {
       <div class="detail-field-value" style="font-family: monospace; font-size: 12px; color: var(--text-muted);">${escapeHtml(activity.id)}</div>
     </div>
     <div class="detail-actions">
+      <button class="btn btn-primary" onclick="showEditForm('${escapeHtml(activity.id)}')">Edit</button>
       <button class="btn btn-secondary" onclick="closeModal()">Close</button>
       <button class="btn btn-secondary" style="color: var(--high);" onclick="deleteActivity('${escapeHtml(activity.id)}')">Delete</button>
     </div>
+  `;
+}
+
+function renderEditForm(activity) {
+  const impact = (activity.metadata && activity.metadata.impact) || '';
+
+  return `
+    <div class="detail-header">
+      <h3>Edit Activity</h3>
+    </div>
+    <form id="edit-form" class="edit-form" onsubmit="handleEditSubmit(event, '${escapeHtml(activity.id)}')">
+      <div class="form-group">
+        <label for="edit-title">Title</label>
+        <input type="text" id="edit-title" value="${escapeHtml(activity.title)}" required>
+      </div>
+      <div class="form-group">
+        <label for="edit-impact">Impact <span class="optional">(optional)</span></label>
+        <input type="text" id="edit-impact" value="${escapeHtml(impact)}">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="edit-project">Project <span class="optional">(optional)</span></label>
+          <input type="text" id="edit-project" value="${escapeHtml(activity.project || '')}">
+        </div>
+        <div class="form-group">
+          <label for="edit-importance">Importance</label>
+          <select id="edit-importance" class="select-input">
+            <option value="high" ${activity.importance === 'high' ? 'selected' : ''}>High</option>
+            <option value="medium" ${activity.importance === 'medium' ? 'selected' : ''}>Medium</option>
+            <option value="low" ${activity.importance === 'low' ? 'selected' : ''}>Low</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="edit-employer">Employer <span class="optional">(optional)</span></label>
+        <input type="text" id="edit-employer" value="${escapeHtml(activity.employer || '')}">
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <button type="button" class="btn btn-secondary" onclick="showActivityDetail('${escapeHtml(activity.id)}')">Cancel</button>
+      </div>
+      <div id="edit-error" class="error-message hidden">
+        Failed to save changes. Please try again.
+      </div>
+    </form>
   `;
 }
 
@@ -333,6 +393,40 @@ async function showActivityDetail(id) {
 
 function closeModal() {
   $('#activity-modal').classList.add('hidden');
+}
+
+async function showEditForm(id) {
+  try {
+    const activity = await api.getActivity(id);
+    $('#modal-body').innerHTML = renderEditForm(activity);
+  } catch (err) {
+    console.error('Failed to load activity for editing:', err);
+  }
+}
+
+async function handleEditSubmit(e, id) {
+  e.preventDefault();
+
+  const data = {
+    title: $('#edit-title').value.trim() || undefined,
+    impact: $('#edit-impact').value.trim() || undefined,
+    project: $('#edit-project').value.trim() || undefined,
+    employer: $('#edit-employer').value.trim() || undefined,
+    importance: $('#edit-importance').value,
+  };
+
+  try {
+    await api.updateActivity(id, data);
+    // Show the updated detail view
+    await showActivityDetail(id);
+    // Refresh the active list view in the background
+    if (state.currentView === 'dashboard') loadDashboard();
+    if (state.currentView === 'activities') loadActivities();
+  } catch (err) {
+    console.error('Failed to update activity:', err);
+    const errorEl = $('#edit-error');
+    if (errorEl) errorEl.classList.remove('hidden');
+  }
 }
 
 async function deleteActivity(id) {

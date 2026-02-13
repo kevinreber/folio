@@ -313,6 +313,7 @@ When running without `--mcp`, the server serves a web dashboard at the root URL 
 | `GET` | `/api/activities` | List activities |
 | `POST` | `/api/activities` | Create activity |
 | `GET` | `/api/activities/:id` | Get activity by ID |
+| `PUT` | `/api/activities/:id` | Update activity |
 | `DELETE` | `/api/activities/:id` | Delete activity |
 | `GET` | `/api/activities/search?q=` | Search activities |
 | `GET` | `/api/stats` | Get statistics |

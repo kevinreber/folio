@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, Query, State},
     http::{header, StatusCode, Uri},
     response::IntoResponse,
-    routing::{delete, get, post},
+    routing::{delete, get, post, put},
     Json, Router,
 };
 use rust_embed::Embed;
@@ -40,6 +40,7 @@ pub async fn serve(host: &str, port: u16, open_browser: bool) -> Result<()> {
         .route("/api/activities", get(list_activities))
         .route("/api/activities", post(create_activity))
         .route("/api/activities/:id", get(get_activity))
+        .route("/api/activities/:id", put(update_activity))
         .route("/api/activities/:id", delete(delete_activity))
         .route("/api/activities/search", get(search_activities))
         .route("/api/stats", get(get_stats))
@@ -62,6 +63,7 @@ pub async fn serve(host: &str, port: u16, open_browser: bool) -> Result<()> {
     println!("  GET    /api/activities           - List activities");
     println!("  POST   /api/activities           - Create activity");
     println!("  GET    /api/activities/:id       - Get activity");
+    println!("  PUT    /api/activities/:id       - Update activity");
     println!("  DELETE /api/activities/:id       - Delete activity");
     println!("  GET    /api/activities/search?q= - Search");
     println!("  GET    /api/stats               - Get statistics");
@@ -234,6 +236,54 @@ async fn create_activity(
     })?;
 
     Ok((StatusCode::CREATED, Json(activity)))
+}
+
+// Update activity request — all fields optional, only provided fields are updated
+#[derive(Debug, Deserialize)]
+pub struct UpdateActivityRequest {
+    title: Option<String>,
+    impact: Option<String>,
+    project: Option<String>,
+    employer: Option<String>,
+    importance: Option<String>,
+}
+
+// Update activity
+async fn update_activity(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+    Json(req): Json<UpdateActivityRequest>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let db = state.db.lock().await;
+
+    // Check that the activity exists
+    let activity = db
+        .get_activity(&id)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .or_else(|| db.get_activity_by_partial_id(&id).ok().flatten());
+
+    match activity {
+        Some(a) => {
+            db.update_activity(
+                &a.id,
+                req.title.as_deref(),
+                req.impact.as_deref(),
+                req.project.as_deref(),
+                req.employer.as_deref(),
+                req.importance.as_deref(),
+            )
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+            // Return updated activity
+            let updated = db
+                .get_activity(&a.id)
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+                .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+            Ok(Json(updated))
+        }
+        None => Err(StatusCode::NOT_FOUND),
+    }
 }
 
 // Get single activity
