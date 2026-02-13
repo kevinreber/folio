@@ -101,11 +101,11 @@ fn main() -> Result<()> {
 
         Commands::Tui => cli::commands::tui(),
 
-        Commands::Serve { host, port, mcp } => {
+        Commands::Serve { host, port, mcp, open } => {
             if mcp {
                 cli::commands::serve_mcp(host, port)
             } else {
-                cli::commands::serve_api(host, port)
+                cli::commands::serve_api(host, port, open)
             }
         }
 
