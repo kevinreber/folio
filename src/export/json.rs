@@ -36,8 +36,6 @@ pub fn import(content: &str) -> Result<Vec<Activity>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{Activity, ActivitySource, ActivityType, Importance};
-    use chrono::Utc;
 
     #[test]
     fn test_export_import_roundtrip() {
