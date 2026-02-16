@@ -716,6 +716,129 @@ html, body {
   gap: 10px;
 }
 
+/* --- What's New (Build Logs) --- */
+.whatsnew-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  padding-left: 160px;
+}
+
+.whatsnew-entry {
+  display: flex;
+  gap: 24px;
+  position: relative;
+  padding: 0 0 32px 28px;
+  border-left: 2px solid var(--border);
+}
+
+.whatsnew-entry:last-child {
+  padding-bottom: 0;
+  border-left-color: transparent;
+}
+
+.whatsnew-entry::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.whatsnew-date {
+  position: absolute;
+  left: -160px;
+  top: 0;
+  width: 130px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding-top: 2px;
+}
+
+.whatsnew-body {
+  flex: 1;
+}
+
+.whatsnew-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.whatsnew-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.whatsnew-category {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+
+.whatsnew-category.new-feature {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.whatsnew-category.improvement {
+  background: var(--low-bg);
+  color: var(--low);
+}
+
+.whatsnew-category.announcement {
+  background: var(--medium-bg);
+  color: var(--medium);
+}
+
+.whatsnew-category.fix {
+  background: var(--high-bg);
+  color: var(--high);
+}
+
+.whatsnew-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 560px;
+}
+
+@media (max-width: 900px) {
+  .whatsnew-list {
+    padding-left: 0;
+  }
+
+  .whatsnew-date {
+    position: static;
+    width: auto;
+    text-align: left;
+    margin-bottom: 4px;
+  }
+
+  .whatsnew-entry {
+    flex-direction: column;
+    gap: 0;
+    padding-left: 20px;
+  }
+}
+
 /* --- Utility --- */
 .hidden {
   display: none !important;
