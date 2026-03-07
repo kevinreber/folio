@@ -1,0 +1,23 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash(git commit*)",
+        "command": "cargo fmt --check && cargo clippy -- -D warnings && cargo test --quiet",
+        "description": "Run fmt check, clippy, and tests before committing"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit(src/**/*.rs)",
+        "command": "cargo fmt --quiet 2>&1 | tail -5 || true",
+        "description": "Auto-format Rust files after edits"
+      },
+      {
+        "matcher": "Write(src/**/*.rs)",
+        "command": "cargo fmt --quiet 2>&1 | tail -5 || true",
+        "description": "Auto-format new Rust files"
+      }
+    ]
+  }
+}
