@@ -87,16 +87,18 @@ jobs:
             artifacts/sha256sums.txt
 
   update-homebrew:
-    name: Update Homebrew Formula
+    name: Update Homebrew Tap
     needs: release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Download checksums
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+
+      - name: Clone homebrew-tap repo
+        run: |
+          git clone https://x-access-token:${{ secrets.HOMEBREW_TAP_TOKEN }}@github.com/kevinreber/homebrew-tap.git
 
       - name: Generate updated formula
         run: |
@@ -113,7 +115,9 @@ jobs:
           SHA_AARCH64_LINUX=$(grep aarch64-unknown-linux-gnu sha256sums.txt | awk '{print $1}')
           SHA_X86_64_LINUX=$(grep x86_64-unknown-linux-gnu sha256sums.txt | awk '{print $1}')
 
-          cat > ../Formula/folio.rb << FORMULA
+          mkdir -p ../homebrew-tap/Formula
+
+          cat > ../homebrew-tap/Formula/folio.rb << FORMULA
           class Folio < Formula
             desc "Local-first career accomplishment tracker"
             homepage "https://github.com/kevinreber/folio"
@@ -152,10 +156,11 @@ jobs:
           end
           FORMULA
 
-      - name: Commit updated formula
+      - name: Push to homebrew-tap
         run: |
+          cd homebrew-tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/folio.rb
-          git diff --cached --quiet || git commit -m "Update Homebrew formula for ${GITHUB_REF_NAME}"
-          git push origin HEAD:main
+          git diff --cached --quiet || git commit -m "Update folio to ${GITHUB_REF_NAME}"
+          git push
