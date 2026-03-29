@@ -1,5 +1,6 @@
 mod capture;
 mod config_cmd;
+mod daemon;
 mod delete;
 mod digest;
 mod edit;
@@ -18,6 +19,7 @@ mod watch;
 
 pub use capture::run as capture;
 pub use config_cmd::{init as config_init, run as config};
+pub use daemon::run_action as daemon;
 pub use delete::run as delete;
 pub use digest::{review, run as digest};
 pub use edit::run as edit;

@@ -1,6 +1,23 @@
 pub mod commands;
 
 use clap::{Parser, Subcommand};
+
+#[derive(Subcommand)]
+pub enum DaemonAction {
+    /// Start the daemon in the background
+    Start,
+    /// Stop the running daemon
+    Stop,
+    /// Show daemon status
+    Status,
+    /// Run the daemon in the foreground (used internally by start/launchd)
+    #[command(hide = true)]
+    Run,
+    /// Install macOS launchd plist for auto-start on login
+    Install,
+    /// Uninstall the launchd plist
+    Uninstall,
+}
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -314,6 +331,12 @@ pub enum Commands {
         /// Add a title/description
         #[arg(short, long)]
         title: Option<String>,
+    },
+
+    /// Manage the background daemon (git watcher + activity tracker)
+    Daemon {
+        #[command(subcommand)]
+        action: DaemonAction,
     },
 
     /// Start activity tracking (active window, idle detection)
