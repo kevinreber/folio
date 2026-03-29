@@ -161,6 +161,7 @@ folio tui
 | `voice` | Record a voice note |
 | `screen-capture` | Capture the screen (alias: `screenshot`) |
 | `track` | Start activity tracking (active window, idle detection) |
+| `daemon` | Unified background daemon (git watcher + activity tracker) |
 
 ## Status
 

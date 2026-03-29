@@ -116,6 +116,8 @@ fn main() -> Result<()> {
 
         Commands::Watch { daemon } => cli::commands::watch(daemon),
 
+        Commands::Daemon { action } => cli::commands::daemon(action),
+
         Commands::ImportTranscript {
             file,
             title,

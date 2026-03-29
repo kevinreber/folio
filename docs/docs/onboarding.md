@@ -335,6 +335,7 @@ folio capture "Thing I forgot to capture earlier"
 | `voice` | Record a voice note | `folio voice --duration 60` |
 | `screen-capture` | Capture the screen | `folio screen-capture --title "Bug"` |
 | `track` | Start activity tracking | `folio track` |
+| `daemon` | Background daemon (watch + track) | `folio daemon start` |
 
 ---
 

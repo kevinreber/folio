@@ -692,3 +692,61 @@ folio track --stop
 ```
 
 > **Note:** Requires the `desktop` feature flag (`cargo build --features desktop`).
+
+---
+
+## daemon
+
+Unified background daemon that combines the git watcher and activity tracker into a single long-running process. Supports running as a background process or auto-starting via macOS launchd.
+
+### Usage
+
+```bash
+folio daemon <SUBCOMMAND>
+```
+
+### Subcommands
+
+| Subcommand | Description |
+|------------|-------------|
+| `start` | Start the daemon in the background |
+| `stop` | Stop the running daemon |
+| `status` | Show daemon status and subsystem info |
+| `install` | Install macOS launchd plist for auto-start on login |
+| `uninstall` | Remove the launchd plist |
+
+### Examples
+
+```bash
+# Start the daemon in the background
+folio daemon start
+
+# Check if it's running and what subsystems are active
+folio daemon status
+
+# Stop the daemon
+folio daemon stop
+
+# Auto-start on login (macOS)
+folio daemon install
+
+# Remove auto-start
+folio daemon uninstall
+```
+
+### How It Works
+
+The daemon runs two subsystems concurrently in a single process:
+
+1. **Git watcher** — Polls configured directories for new commits on an interval (default: 5 minutes) and auto-captures them as activities
+2. **Activity tracker** — Monitors the active window and idle state, grouping work into sessions
+
+Both subsystems are controlled by your `~/.folio/config.toml`. If a subsystem is disabled in config, the daemon skips it.
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `~/.folio/daemon.pid` | PID file for process management |
+| `~/.folio/daemon.log` | Daemon log output |
+| `~/Library/LaunchAgents/com.folio.daemon.plist` | Launchd plist (after `install`) |
