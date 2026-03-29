@@ -88,6 +88,7 @@ pub fn run_action(action: DaemonAction) -> Result<()> {
         DaemonAction::Stop => daemon_stop(),
         DaemonAction::Status => daemon_status(),
         DaemonAction::Run => daemon_run(),
+        DaemonAction::Restart => daemon_restart(),
         DaemonAction::Install => daemon_install(),
         DaemonAction::Uninstall => daemon_uninstall(),
     }
@@ -165,6 +166,29 @@ fn daemon_stop() -> Result<()> {
     remove_pid_file()?;
     println!("{} Daemon stopped", "●".red());
     Ok(())
+}
+
+/// Restart the daemon (stop + start)
+fn daemon_restart() -> Result<()> {
+    // Stop if running (ignore errors if not running)
+    let was_running = match read_pid_file()? {
+        Some(pid) if is_process_alive(pid) => {
+            daemon_stop()?;
+            true
+        }
+        Some(_) => {
+            remove_pid_file()?;
+            false
+        }
+        None => false,
+    };
+
+    if was_running {
+        // Brief pause to ensure port/file cleanup
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+
+    daemon_start()
 }
 
 /// Show daemon status

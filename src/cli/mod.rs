@@ -13,6 +13,8 @@ pub enum DaemonAction {
     /// Run the daemon in the foreground (used internally by start/launchd)
     #[command(hide = true)]
     Run,
+    /// Restart the daemon (stop + start) — useful after rebuilding
+    Restart,
     /// Install macOS launchd plist for auto-start on login
     Install,
     /// Uninstall the launchd plist
