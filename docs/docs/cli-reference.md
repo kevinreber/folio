@@ -479,3 +479,216 @@ folio review
 # Last year
 folio review --months 12
 ```
+
+---
+
+## import-transcript
+
+Import a transcript file (VTT, SRT, or plain text) as an activity.
+
+### Usage
+
+```bash
+folio import-transcript <FILE> [OPTIONS]
+```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `<FILE>` | Yes | Path to the transcript file |
+
+### Options
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--title <TEXT>` | `-t` | Title for the transcript/meeting |
+| `--date <YYYY-MM-DD>` | `-d` | Meeting date |
+| `--extract-actions` | | Extract action items from transcript |
+
+### Examples
+
+```bash
+# Import a VTT transcript
+folio import-transcript meeting.vtt --title "Sprint Planning"
+
+# Import with action item extraction
+folio import-transcript standup.srt --extract-actions --date 2025-03-15
+```
+
+---
+
+## import-meeting
+
+Import a meeting summary from Otter, Loom, or manual input.
+
+### Usage
+
+```bash
+folio import-meeting [FILE] [OPTIONS]
+```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `[FILE]` | No | Path to meeting summary file (JSON) or text |
+
+### Options
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--title <TEXT>` | `-t` | Meeting title | |
+| `--source <FORMAT>` | `-s` | Source format: `otter`, `loom`, `manual` | `manual` |
+
+### Examples
+
+```bash
+# Import from Otter export
+folio import-meeting otter-export.json --source otter
+
+# Import a Loom transcript
+folio import-meeting loom-summary.json --source loom --title "Design Review"
+
+# Manual import
+folio import-meeting notes.txt --title "1:1 with Manager"
+```
+
+---
+
+## import-calendar
+
+Import calendar events from an ICS file.
+
+### Usage
+
+```bash
+folio import-calendar <FILE> [OPTIONS]
+```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `<FILE>` | Yes | Path to ICS file |
+
+### Options
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--days <N>` | `-d` | Only import events from the last N days |
+
+### Examples
+
+```bash
+# Import all events from a calendar export
+folio import-calendar calendar.ics
+
+# Import only last 7 days of events
+folio import-calendar calendar.ics --days 7
+```
+
+---
+
+## voice
+
+Record a voice note and optionally transcribe it.
+
+### Usage
+
+```bash
+folio voice [OPTIONS]
+```
+
+### Options
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--duration <SECONDS>` | `-d` | Duration limit in seconds |
+| `--transcribe` | | Transcribe using OpenAI Whisper |
+
+### Examples
+
+```bash
+# Record a voice note
+folio voice
+
+# Record with a 60-second limit
+folio voice --duration 60
+
+# Record and transcribe
+folio voice --duration 30 --transcribe
+```
+
+> **Note:** Requires the `audio` feature flag (`cargo build --features audio`).
+
+---
+
+## screen-capture
+
+Capture the screen and save it as an activity. Also available as `folio screenshot`.
+
+### Usage
+
+```bash
+folio screen-capture [OPTIONS]
+```
+
+### Options
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--title <TEXT>` | `-t` | Add a title/description to the capture |
+
+### Examples
+
+```bash
+# Capture the screen
+folio screen-capture
+
+# Capture with a description
+folio screen-capture --title "Dashboard redesign mockup"
+
+# Using the alias
+folio screenshot --title "Bug reproduction"
+```
+
+> **Note:** Requires the `desktop` feature flag (`cargo build --features desktop`).
+
+---
+
+## track
+
+Start activity tracking with active window detection and idle detection.
+
+### Usage
+
+```bash
+folio track [OPTIONS]
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--foreground` | Run in foreground (default: daemon mode) |
+| `--stop` | Stop tracking |
+| `--status` | Show tracking status |
+
+### Examples
+
+```bash
+# Start tracking as a background daemon
+folio track
+
+# Start tracking in foreground
+folio track --foreground
+
+# Check tracking status
+folio track --status
+
+# Stop tracking
+folio track --stop
+```
+
+> **Note:** Requires the `desktop` feature flag (`cargo build --features desktop`).

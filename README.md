@@ -155,6 +155,12 @@ folio tui
 | `watch` | Background git monitoring daemon |
 | `config` | Manage configuration |
 | `stats` | Show activity statistics |
+| `import-transcript` | Import a transcript file (VTT, SRT, or plain text) |
+| `import-meeting` | Import a meeting summary (Otter, Loom, or manual) |
+| `import-calendar` | Import calendar events from ICS file |
+| `voice` | Record a voice note |
+| `screen-capture` | Capture the screen (alias: `screenshot`) |
+| `track` | Start activity tracking (active window, idle detection) |
 
 ## Status
 

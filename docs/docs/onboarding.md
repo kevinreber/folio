@@ -60,7 +60,7 @@ folio --version
 
 You should see something like:
 ```
-folio 0.1.0
+folio 0.2.0
 ```
 
 ---
@@ -329,6 +329,12 @@ folio capture "Thing I forgot to capture earlier"
 | `serve` | Start web dashboard + API | `folio serve --open` |
 | `sync` | Sync from git/GitHub/Linear | `folio sync --source git` |
 | `digest` | Generate activity summary | `folio digest weekly` |
+| `import-transcript` | Import a transcript file | `folio import-transcript meeting.vtt` |
+| `import-meeting` | Import a meeting summary | `folio import-meeting notes.json --source otter` |
+| `import-calendar` | Import calendar events | `folio import-calendar calendar.ics` |
+| `voice` | Record a voice note | `folio voice --duration 60` |
+| `screen-capture` | Capture the screen | `folio screen-capture --title "Bug"` |
+| `track` | Start activity tracking | `folio track` |
 
 ---
 
