@@ -152,7 +152,7 @@ impl ActiveWindowTracker {
                             String::new()
                         },
                         process_id: window.process_id,
-                        process_path: Some(window.process_path),
+                        process_path: Some(window.process_path.to_string_lossy().to_string()),
                         timestamp: Utc::now(),
                         category: Some(category),
                     }))

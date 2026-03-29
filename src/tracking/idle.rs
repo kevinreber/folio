@@ -59,7 +59,7 @@ impl IdleDetector {
         #[cfg(feature = "desktop")]
         {
             match user_idle::UserIdle::get_time() {
-                Ok(idle) => Ok(idle.as_secs()),
+                Ok(idle) => Ok(idle.as_seconds()),
                 Err(_) => Ok(0),
             }
         }
