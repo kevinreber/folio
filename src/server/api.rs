@@ -1104,7 +1104,7 @@ async fn get_config() -> Result<impl IntoResponse, ApiError> {
         .map(|dir| {
             let exists = dir.exists();
             let repo_count = if exists {
-                crate::integrations::git::discover_repos_in(&[dir.clone()], config.git.max_depth)
+                crate::integrations::git::discover_repos_in(std::slice::from_ref(dir), config.git.max_depth)
                     .map(|r| r.len())
                     .unwrap_or(0)
             } else {
@@ -1182,7 +1182,7 @@ async fn discover_config() -> Result<impl IntoResponse, ApiError> {
     })?;
 
     let home = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
-    let candidate_dirs = vec![
+    let candidate_dirs = [
         home.join("Documents").join("code"),
         home.join("code"),
         home.join("projects"),
@@ -1201,7 +1201,7 @@ async fn discover_config() -> Result<impl IntoResponse, ApiError> {
         .filter(|dir| dir.exists())
         .map(|dir| {
             let repos =
-                crate::integrations::git::discover_repos_in(&[dir.clone()], 3).unwrap_or_default();
+                crate::integrations::git::discover_repos_in(std::slice::from_ref(dir), 3).unwrap_or_default();
             serde_json::json!({
                 "path": dir.display().to_string(),
                 "repo_count": repos.len(),

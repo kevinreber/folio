@@ -99,14 +99,8 @@ pub fn init() -> Result<()> {
     println!();
     println!("{}", "  Welcome to Folio  ".bold().on_bright_blue().white());
     println!();
-    println!(
-        "{}",
-        "Let's set up your career tracker. This wizard will auto-discover"
-    );
-    println!(
-        "{}",
-        "your git repos, detect your identities, and configure syncing."
-    );
+    println!("Let's set up your career tracker. This wizard will auto-discover");
+    println!("your git repos, detect your identities, and configure syncing.");
     println!("{}", "─".repeat(60).dimmed());
 
     let mut config = Config::load()?;
@@ -140,7 +134,7 @@ pub fn init() -> Result<()> {
     for dir in &candidate_dirs {
         if dir.exists() {
             let repos =
-                crate::integrations::git::discover_repos_in(&[dir.clone()], 3).unwrap_or_default();
+                crate::integrations::git::discover_repos_in(std::slice::from_ref(dir), 3).unwrap_or_default();
             if !repos.is_empty() {
                 found_dirs.push((dir.clone(), repos.len()));
             }
@@ -196,7 +190,7 @@ pub fn init() -> Result<()> {
             .scan_dirs
             .iter()
             .map(|d| {
-                crate::integrations::git::discover_repos_in(&[d.clone()], 3)
+                crate::integrations::git::discover_repos_in(std::slice::from_ref(d), 3)
                     .unwrap_or_default()
                     .len()
             })
