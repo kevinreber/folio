@@ -723,9 +723,18 @@ async fn get_insights(
     let total = filtered.len();
 
     // By importance
-    let high = filtered.iter().filter(|a| a.importance.to_string() == "high").count();
-    let medium = filtered.iter().filter(|a| a.importance.to_string() == "medium").count();
-    let low = filtered.iter().filter(|a| a.importance.to_string() == "low").count();
+    let high = filtered
+        .iter()
+        .filter(|a| a.importance.to_string() == "high")
+        .count();
+    let medium = filtered
+        .iter()
+        .filter(|a| a.importance.to_string() == "medium")
+        .count();
+    let low = filtered
+        .iter()
+        .filter(|a| a.importance.to_string() == "low")
+        .count();
 
     // By source
     let mut by_source: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
@@ -737,10 +746,8 @@ async fn get_insights(
     let mut by_project: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
     for a in &filtered {
         let p = a.project.as_deref().unwrap_or("unknown");
-        let normalized = normalize_project_name(
-            p,
-            a.metadata.get("project_path").and_then(|v| v.as_str()),
-        );
+        let normalized =
+            normalize_project_name(p, a.metadata.get("project_path").and_then(|v| v.as_str()));
         *by_project.entry(normalized).or_insert(0) += 1;
     }
     let mut top_projects: Vec<(String, usize)> = by_project.into_iter().collect();
@@ -755,7 +762,12 @@ async fn get_insights(
             .metadata
             .get("identity_tag")
             .and_then(|v| v.as_str())
-            .or_else(|| a.metadata.get("is_personal").and_then(|v| v.as_bool()).map(|b| if b { "personal" } else { "work" }))
+            .or_else(|| {
+                a.metadata
+                    .get("is_personal")
+                    .and_then(|v| v.as_bool())
+                    .map(|b| if b { "personal" } else { "work" })
+            })
             .unwrap_or("unknown");
         match tag {
             "work" => work_count += 1,
@@ -790,7 +802,8 @@ async fn get_insights(
 
     // Work/personal balance
     if work_count > 0 && personal_count > 0 {
-        let work_pct = (work_count as f64 / (work_count + personal_count) as f64 * 100.0).round() as usize;
+        let work_pct =
+            (work_count as f64 / (work_count + personal_count) as f64 * 100.0).round() as usize;
         insights.push(serde_json::json!({"type": "info", "text": format!("{}% work / {}% personal split", work_pct, 100 - work_pct)}));
     }
 
@@ -836,9 +849,14 @@ async fn get_insights(
     // Busiest day in the filtered range
     let mut by_day: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
     for a in &filtered {
-        *by_day.entry(a.timestamp.format("%Y-%m-%d").to_string()).or_insert(0) += 1;
+        *by_day
+            .entry(a.timestamp.format("%Y-%m-%d").to_string())
+            .or_insert(0) += 1;
     }
-    let busiest_day = by_day.iter().max_by_key(|(_, c)| *c).map(|(d, c)| serde_json::json!({"date": d, "count": c}));
+    let busiest_day = by_day
+        .iter()
+        .max_by_key(|(_, c)| *c)
+        .map(|(d, c)| serde_json::json!({"date": d, "count": c}));
 
     Ok(Json(serde_json::json!({
         "total": total,
@@ -863,10 +881,7 @@ fn normalize_project_name(project_name: &str, project_path: Option<&str>) -> Str
 
         // Pattern 1: Claude Code worktrees — .claude/worktrees/<name>
         if let Some(pos) = parts.iter().position(|&s| s == ".claude") {
-            if pos > 0
-                && parts.get(pos + 1) == Some(&"worktrees")
-                && parts.get(pos + 2).is_some()
-            {
+            if pos > 0 && parts.get(pos + 1) == Some(&"worktrees") && parts.get(pos + 2).is_some() {
                 return parts[pos - 1].to_string();
             }
         }
@@ -917,8 +932,13 @@ async fn get_claude_projects(
     for a in &claude_activities {
         let raw_project = a.project.as_deref().unwrap_or("unknown");
         // Normalize: resolve worktrees to parent project
-        let project = normalize_project_name(raw_project, a.metadata.get("project_path").and_then(|v| v.as_str()));
-        let stats = project_stats.entry(project.clone()).or_insert(ProjectStats {
+        let project = normalize_project_name(
+            raw_project,
+            a.metadata.get("project_path").and_then(|v| v.as_str()),
+        );
+        let stats = project_stats
+            .entry(project.clone())
+            .or_insert(ProjectStats {
             project,
             sessions: 0,
             total_prompts: 0,
@@ -975,11 +995,7 @@ async fn get_claude_projects(
         b.get("total_prompts")
             .and_then(|v| v.as_u64())
             .unwrap_or(0)
-            .cmp(
-                &a.get("total_prompts")
-                    .and_then(|v| v.as_u64())
-                    .unwrap_or(0),
-            )
+            .cmp(&a.get("total_prompts").and_then(|v| v.as_u64()).unwrap_or(0))
     });
 
     Ok(Json(serde_json::json!({
@@ -1019,17 +1035,18 @@ async fn get_claude_heatmap(
     let cutoff = chrono::Utc::now() - chrono::Duration::days(days as i64);
 
     // Build a project x date matrix
-    let mut matrix: std::collections::HashMap<
-        String,
-        std::collections::HashMap<String, usize>,
-    > = std::collections::HashMap::new();
+    let mut matrix: std::collections::HashMap<String, std::collections::HashMap<String, usize>> =
+        std::collections::HashMap::new();
 
     for a in &activities {
         if a.source.to_string() != "claude_code" || a.timestamp < cutoff {
             continue;
         }
         let raw_project = a.project.as_deref().unwrap_or("unknown");
-        let project = normalize_project_name(raw_project, a.metadata.get("project_path").and_then(|v| v.as_str()));
+        let project = normalize_project_name(
+            raw_project,
+            a.metadata.get("project_path").and_then(|v| v.as_str()),
+        );
         let date = a.timestamp.format("%Y-%m-%d").to_string();
         let prompts = a
             .metadata
@@ -1037,11 +1054,7 @@ async fn get_claude_heatmap(
             .and_then(|v| v.as_u64())
             .unwrap_or(1) as usize;
 
-        *matrix
-            .entry(project)
-            .or_default()
-            .entry(date)
-            .or_insert(0) += prompts;
+        *matrix.entry(project).or_default().entry(date).or_insert(0) += prompts;
     }
 
     // Convert to response format
@@ -1051,9 +1064,7 @@ async fn get_claude_heatmap(
             let total: usize = dates.values().sum();
             let days_data: Vec<serde_json::Value> = dates
                 .into_iter()
-                .map(|(date, count)| {
-                    serde_json::json!({"date": date, "prompts": count})
-                })
+                .map(|(date, count)| serde_json::json!({"date": date, "prompts": count}))
                 .collect();
             serde_json::json!({
                 "project": project,
@@ -1067,11 +1078,7 @@ async fn get_claude_heatmap(
         b.get("total_prompts")
             .and_then(|v| v.as_u64())
             .unwrap_or(0)
-            .cmp(
-                &a.get("total_prompts")
-                    .and_then(|v| v.as_u64())
-                    .unwrap_or(0),
-            )
+            .cmp(&a.get("total_prompts").and_then(|v| v.as_u64()).unwrap_or(0))
     });
 
     Ok(Json(serde_json::json!({
@@ -1087,9 +1094,7 @@ async fn get_config() -> Result<impl IntoResponse, ApiError> {
         error: e.to_string(),
     })?;
 
-    let config_exists = Config::config_path()
-        .map(|p| p.exists())
-        .unwrap_or(false);
+    let config_exists = Config::config_path().map(|p| p.exists()).unwrap_or(false);
 
     // Count repos per scan dir
     let scan_dirs_info: Vec<serde_json::Value> = config
@@ -1161,11 +1166,7 @@ async fn update_config(
         };
     }
     if let Some(email) = req.git_email {
-        config.general.git_email = if email.is_empty() {
-            None
-        } else {
-            Some(email)
-        };
+        config.general.git_email = if email.is_empty() { None } else { Some(email) };
     }
 
     config.save().map_err(|e| ApiError {
@@ -1216,7 +1217,11 @@ async fn discover_config() -> Result<impl IntoResponse, ApiError> {
     // Discover emails
     let scan_dirs: Vec<std::path::PathBuf> = dirs_info
         .iter()
-        .filter_map(|d| d.get("path").and_then(|p| p.as_str()).map(std::path::PathBuf::from))
+        .filter_map(|d| {
+            d.get("path")
+                .and_then(|p| p.as_str())
+                .map(std::path::PathBuf::from)
+        })
         .collect();
 
     let emails = if !scan_dirs.is_empty() {

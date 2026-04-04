@@ -139,8 +139,8 @@ pub fn init() -> Result<()> {
     let mut found_dirs: Vec<(PathBuf, usize)> = Vec::new();
     for dir in &candidate_dirs {
         if dir.exists() {
-            let repos = crate::integrations::git::discover_repos_in(&[dir.clone()], 3)
-                .unwrap_or_default();
+            let repos =
+                crate::integrations::git::discover_repos_in(&[dir.clone()], 3).unwrap_or_default();
             if !repos.is_empty() {
                 found_dirs.push((dir.clone(), repos.len()));
             }
@@ -148,7 +148,10 @@ pub fn init() -> Result<()> {
     }
 
     if found_dirs.is_empty() {
-        println!("  {} No git repos found in common directories.", "!".yellow());
+        println!(
+            "  {} No git repos found in common directories.",
+            "!".yellow()
+        );
     } else {
         println!("  {} Found repos in:", "✓".green());
         for (i, (dir, count)) in found_dirs.iter().enumerate() {
@@ -162,9 +165,7 @@ pub fn init() -> Result<()> {
     }
 
     println!();
-    print!(
-        "  Enter directories to scan (comma-separated, Enter to accept found dirs): "
-    );
+    print!("  Enter directories to scan (comma-separated, Enter to accept found dirs): ");
     io::stdout().flush()?;
     let mut dirs_input = String::new();
     io::stdin().read_line(&mut dirs_input)?;
@@ -210,11 +211,7 @@ pub fn init() -> Result<()> {
 
     // --- Step 2: Discover git emails ---
     println!();
-    println!(
-        "{} {}",
-        "Step 2:".yellow().bold(),
-        "Git Identities".bold()
-    );
+    println!("{} {}", "Step 2:".yellow().bold(), "Git Identities".bold());
     println!(
         "{}",
         "Folio scans ALL commits on your device, then tags them by email.".dimmed()
@@ -234,7 +231,15 @@ pub fn init() -> Result<()> {
         println!("  {} Found {} email identities:", "✓".green(), emails.len());
         println!();
 
-        let personal_domains = ["gmail.com", "outlook.com", "hotmail.com", "yahoo.com", "proton.me", "icloud.com", "me.com"];
+        let personal_domains = [
+            "gmail.com",
+            "outlook.com",
+            "hotmail.com",
+            "yahoo.com",
+            "proton.me",
+            "icloud.com",
+            "me.com",
+        ];
 
         for (email, repos) in &emails {
             let suggested = if personal_domains.iter().any(|d| email.ends_with(d)) {
@@ -248,15 +253,8 @@ pub fn init() -> Result<()> {
                 format!("{}, ... +{} more", repos[..2].join(", "), repos.len() - 2)
             };
 
-            println!(
-                "    {} (found in: {})",
-                email.cyan(),
-                repos_str.dimmed()
-            );
-            print!(
-                "    Tag as [{}]: ",
-                suggested.yellow()
-            );
+            println!("    {} (found in: {})", email.cyan(), repos_str.dimmed());
+            print!("    Tag as [{}]: ", suggested.yellow());
             io::stdout().flush()?;
             let mut tag_input = String::new();
             io::stdin().read_line(&mut tag_input)?;
@@ -272,11 +270,7 @@ pub fn init() -> Result<()> {
 
     // --- Step 3: Default employer ---
     if config.git.email_tags.values().any(|v| v == "work") {
-        println!(
-            "{} {}",
-            "Step 3:".yellow().bold(),
-            "Employer".bold()
-        );
+        println!("{} {}", "Step 3:".yellow().bold(), "Employer".bold());
         let current = config
             .general
             .default_employer
