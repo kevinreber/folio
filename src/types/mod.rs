@@ -10,6 +10,7 @@ pub enum ActivitySource {
     Jira,
     Manual,
     ScreenCapture,
+    ClaudeCode,
     // New sources for enhanced tracking
     ActiveWindow,
     Calendar,
@@ -28,6 +29,7 @@ impl std::fmt::Display for ActivitySource {
             Self::Jira => write!(f, "jira"),
             Self::Manual => write!(f, "manual"),
             Self::ScreenCapture => write!(f, "screen_capture"),
+            Self::ClaudeCode => write!(f, "claude_code"),
             Self::ActiveWindow => write!(f, "active_window"),
             Self::Calendar => write!(f, "calendar"),
             Self::Transcript => write!(f, "transcript"),
@@ -49,6 +51,7 @@ impl std::str::FromStr for ActivitySource {
             "jira" => Ok(Self::Jira),
             "manual" => Ok(Self::Manual),
             "screen_capture" => Ok(Self::ScreenCapture),
+            "claude_code" => Ok(Self::ClaudeCode),
             "active_window" => Ok(Self::ActiveWindow),
             "calendar" => Ok(Self::Calendar),
             "transcript" => Ok(Self::Transcript),

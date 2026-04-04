@@ -4,7 +4,10 @@ use std::path::PathBuf;
 
 use crate::config::Config;
 use crate::db::Database;
-use crate::integrations::{git::GitScanConfig, GitHubClient, GitScanner, LinearClient};
+use crate::integrations::{
+    claude_code::ClaudeCodeConfig, git::GitScanConfig, ClaudeCodeScanner, GitHubClient, GitScanner,
+    LinearClient,
+};
 use crate::types::Activity;
 
 pub fn run(source: Option<String>, days: u32, repo: Option<PathBuf>, dry_run: bool) -> Result<()> {
@@ -49,6 +52,11 @@ pub fn run(source: Option<String>, days: u32, repo: Option<PathBuf>, dry_run: bo
         }
     }
 
+    if source == "claude" || source == "all" {
+        let count = sync_claude_code(&db, days, dry_run)?;
+        total_imported += count;
+    }
+
     println!();
     println!("{}", "─".repeat(50).dimmed());
 
@@ -79,18 +87,32 @@ fn sync_git(
     println!();
     println!("{}", "Git repositories".yellow().bold());
 
-    let scan_dirs = if let Some(r) = repo {
-        vec![r]
+    let (scan_dirs, author_email, min_lines) = if let Some(r) = repo {
+        // When scanning an explicit repo, don't filter by email or line count
+        (vec![r], None, 1)
+    } else if !config.git.email_tags.is_empty() {
+        // Device-based scanning: scan all commits, tag by email
+        (
+            config.git.scan_dirs.clone(),
+            None,
+            config.git.min_lines_changed,
+        )
     } else {
-        config.git.scan_dirs.clone()
+        // Legacy: filter by single email
+        (
+            config.git.scan_dirs.clone(),
+            config.general.git_email.clone(),
+            config.git.min_lines_changed,
+        )
     };
 
     let git_config = GitScanConfig {
         scan_dirs,
         max_depth: config.git.max_depth,
         days_back: days,
-        author_email: config.general.git_email.clone(),
-        min_lines_changed: config.git.min_lines_changed,
+        author_email,
+        min_lines_changed: min_lines,
+        email_tags: config.git.email_tags.clone(),
     };
 
     let scanner = GitScanner::new(git_config);
@@ -201,6 +223,60 @@ fn sync_github(config: &Config, db: &Database, days: u32, dry_run: bool) -> Resu
     }
 
     println!("  {} Imported {} new activities", "✓".green(), imported);
+    Ok(imported)
+}
+
+fn sync_claude_code(db: &Database, days: u32, dry_run: bool) -> Result<usize> {
+    println!();
+    println!("{}", "Claude Code".yellow().bold());
+
+    let config = ClaudeCodeConfig {
+        days_back: days,
+        ..Default::default()
+    };
+
+    if !config.history_path.exists() {
+        println!(
+            "  {}",
+            "No history.jsonl found. Claude Code history not available.".dimmed()
+        );
+        return Ok(0);
+    }
+
+    let scanner = ClaudeCodeScanner::new(config);
+    let activities = scanner.scan()?;
+    println!(
+        "  Found {} sessions in last {} days",
+        activities.len(),
+        days
+    );
+
+    if dry_run {
+        for activity in activities.iter().take(5) {
+            println!("    {} {}", "•".dimmed(), activity.title);
+        }
+        if activities.len() > 5 {
+            println!("    {} ... and {} more", "".dimmed(), activities.len() - 5);
+        }
+        return Ok(activities.len());
+    }
+
+    // Import new activities
+    let mut imported = 0;
+    for activity in activities {
+        let session_id = activity
+            .metadata
+            .get("session_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+
+        if !session_id.is_empty() && !db.activity_exists_by_metadata("session_id", session_id)? {
+            db.insert_activity(&activity)?;
+            imported += 1;
+        }
+    }
+
+    println!("  {} Imported {} new sessions", "✓".green(), imported);
     Ok(imported)
 }
 

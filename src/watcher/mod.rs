@@ -133,6 +133,7 @@ impl Watcher {
             days_back: 7, // Only look at recent commits for initial scan
             author_email: self.config.author_email.clone(),
             min_lines_changed: 0, // Get all commits for seen list
+            email_tags: std::collections::HashMap::new(),
         };
 
         let scanner = GitScanner::new(git_config);
@@ -160,6 +161,7 @@ impl Watcher {
             days_back: 1, // Only look at recent commits
             author_email: self.config.author_email.clone(),
             min_lines_changed: self.config.min_lines_changed,
+            email_tags: std::collections::HashMap::new(),
         };
 
         let scanner = GitScanner::new(git_config);
