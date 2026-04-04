@@ -16,12 +16,16 @@ CARGO := cargo
 # Default target
 all: build
 
-# Build debug binary
-build:
+# Build web UI (requires Node.js)
+web-ui:
+	@cd web-ui && npm install && npm run build
+
+# Build debug binary (builds web UI first)
+build: web-ui
 	$(CARGO) build
 
-# Build release binary
-release:
+# Build release binary (builds web UI first)
+release: web-ui
 	$(CARGO) build --release
 
 # Install to ~/.local/bin

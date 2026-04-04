@@ -51,6 +51,7 @@ url = "2"
 
 # Async runtime
 tokio = { version = "1", features = ["full"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
 
 # Web server for REST API and MCP
 axum = "0.7"

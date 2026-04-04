@@ -106,11 +106,13 @@ fn main() -> Result<()> {
             port,
             mcp,
             open,
+            remote,
+            token,
         } => {
             if mcp {
                 cli::commands::serve_mcp(host, port)
             } else {
-                cli::commands::serve_api(host, port, open)
+                cli::commands::serve_api(host, port, open, remote, token)
             }
         }
 

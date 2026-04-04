@@ -1,12 +1,24 @@
 use anyhow::Result;
 use colored::Colorize;
 
-pub fn run_api(host: String, port: u16, open_browser: bool) -> Result<()> {
+pub fn run_api(
+    host: String,
+    port: u16,
+    open_browser: bool,
+    remote: bool,
+    token: Option<String>,
+) -> Result<()> {
     println!("{}", "Starting Folio server with web dashboard...".cyan());
 
     // Run async server
     let rt = tokio::runtime::Runtime::new()?;
-    rt.block_on(crate::server::api::serve(&host, port, open_browser))?;
+    rt.block_on(crate::server::api::serve(
+        &host,
+        port,
+        open_browser,
+        remote,
+        token,
+    ))?;
 
     Ok(())
 }

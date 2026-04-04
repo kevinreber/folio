@@ -265,6 +265,14 @@ pub enum Commands {
         /// Open the dashboard in your default browser
         #[arg(long)]
         open: bool,
+
+        /// Enable remote access (binds to 0.0.0.0 and enables token auth)
+        #[arg(long)]
+        remote: bool,
+
+        /// Auth token for remote access (auto-generated if --remote is used without this)
+        #[arg(long)]
+        token: Option<String>,
     },
 
     /// Watch for new git commits and capture them automatically

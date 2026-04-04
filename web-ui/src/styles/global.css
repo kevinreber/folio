@@ -312,6 +312,7 @@ html, body {
   gap: 2px;
 }
 
+a.activity-item,
 .activity-item {
   display: flex;
   align-items: center;
@@ -322,6 +323,8 @@ html, body {
   border-radius: var(--radius);
   cursor: pointer;
   transition: all var(--transition);
+  text-decoration: none;
+  color: inherit;
 }
 
 .activity-item:hover {

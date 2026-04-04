@@ -2,33 +2,68 @@ use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
     http::{header, StatusCode, Uri},
-    response::IntoResponse,
+    response::{
+        sse::{Event, KeepAlive},
+        IntoResponse, Sse,
+    },
     routing::{delete, get, post, put},
     Json, Router,
 };
 use rust_embed::Embed;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{broadcast, Mutex};
+use tokio_stream::wrappers::BroadcastStream;
+use tokio_stream::StreamExt;
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::db::Database;
 use crate::types::{Activity, Importance};
 
-/// Embedded web UI assets (compiled into the binary)
+/// Embedded web UI assets (compiled into the binary from Vite build output)
 #[derive(Embed)]
-#[folder = "web-ui/"]
+#[folder = "web-ui/dist/"]
 struct WebAssets;
 
 /// Shared application state
 pub struct AppState {
     pub db: Mutex<Database>,
+    /// Broadcast channel for SSE — notifies clients when data changes
+    pub events_tx: broadcast::Sender<()>,
+    /// Optional auth token for remote access
+    pub auth_token: Option<String>,
 }
 
 /// Start the REST API server
-pub async fn serve(host: &str, port: u16, open_browser: bool) -> Result<()> {
+pub async fn serve(
+    host: &str,
+    port: u16,
+    open_browser: bool,
+    remote: bool,
+    auth_token: Option<String>,
+) -> Result<()> {
     let db = Database::open()?;
-    let state = Arc::new(AppState { db: Mutex::new(db) });
+    let (events_tx, _) = broadcast::channel(64);
+
+    // If remote mode is enabled but no token provided, generate one
+    let auth_token = if remote && auth_token.is_none() {
+        let token = uuid::Uuid::new_v4().to_string();
+        println!("Remote access enabled. Auth token: {}", token);
+        println!(
+            "Use this token in the Authorization header: Bearer {}",
+            token
+        );
+        println!();
+        Some(token)
+    } else {
+        auth_token
+    };
+
+    let state = Arc::new(AppState {
+        db: Mutex::new(db),
+        events_tx,
+        auth_token,
+    });
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -45,18 +80,25 @@ pub async fn serve(host: &str, port: u16, open_browser: bool) -> Result<()> {
         .route("/api/activities/search", get(search_activities))
         .route("/api/stats", get(get_stats))
         .route("/api/export", get(export_data))
+        .route("/api/events", get(sse_handler))
         .fallback(get(serve_web_ui))
         .layer(cors)
         .with_state(state);
 
-    let addr = format!("{}:{}", host, port);
+    // Bind to 0.0.0.0 in remote mode, otherwise use provided host
+    let bind_host = if remote { "0.0.0.0" } else { host };
+    let addr = format!("{}:{}", bind_host, port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
 
-    let url = format!("http://{}", addr);
+    let url = format!("http://{}:{}", host, port);
     println!("Folio server running on {}", url);
+    if remote {
+        println!("Remote access enabled — binding to 0.0.0.0:{}", port);
+    }
     println!();
     println!("  Dashboard:  {}", url);
     println!("  API:        {}/api/health", url);
+    println!("  Events:     {}/api/events (SSE)", url);
     println!();
     println!("API Endpoints:");
     println!("  GET    /api/health              - Health check");
@@ -68,6 +110,7 @@ pub async fn serve(host: &str, port: u16, open_browser: bool) -> Result<()> {
     println!("  GET    /api/activities/search?q= - Search");
     println!("  GET    /api/stats               - Get statistics");
     println!("  GET    /api/export?format=       - Export data");
+    println!("  GET    /api/events              - SSE event stream");
 
     if open_browser {
         let _ = open_url(&url);
@@ -129,6 +172,22 @@ async fn serve_web_ui(uri: Uri) -> impl IntoResponse {
             }
         }
     }
+}
+
+/// SSE endpoint — clients subscribe to get notified when data changes
+async fn sse_handler(
+    State(state): State<Arc<AppState>>,
+) -> Sse<impl tokio_stream::Stream<Item = Result<Event, std::convert::Infallible>>> {
+    let rx = state.events_tx.subscribe();
+    let stream = BroadcastStream::new(rx).map(|_| Ok(Event::default().event("activity_changed")));
+
+    Sse::new(stream).keep_alive(KeepAlive::default())
+}
+
+/// Broadcast a data-change event to all SSE subscribers
+fn notify_clients(state: &AppState) {
+    // Ignore send errors — means no listeners are connected
+    let _ = state.events_tx.send(());
 }
 
 // Health check endpoint
@@ -235,6 +294,8 @@ async fn create_activity(
         error: e.to_string(),
     })?;
 
+    notify_clients(&state);
+
     Ok((StatusCode::CREATED, Json(activity)))
 }
 
@@ -280,6 +341,8 @@ async fn update_activity(
                 .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
                 .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
 
+            notify_clients(&state);
+
             Ok(Json(updated))
         }
         None => Err(StatusCode::NOT_FOUND),
@@ -321,6 +384,9 @@ async fn delete_activity(
         Some(a) => {
             db.delete_activity(&a.id)
                 .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+            notify_clients(&state);
+
             Ok(StatusCode::NO_CONTENT)
         }
         None => Err(StatusCode::NOT_FOUND),
