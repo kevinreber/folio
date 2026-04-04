@@ -12,6 +12,10 @@ clap = { version = "4", features = ["derive"] }
 
 # Database
 rusqlite = { version = "0.32", features = ["bundled"] }
+libsql = "0.6"
+
+# Device identification
+hostname = "0.4"
 
 # Date/time
 chrono = { version = "0.4", features = ["serde"] }

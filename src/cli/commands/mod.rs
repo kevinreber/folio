@@ -15,6 +15,7 @@ mod stats;
 mod sync;
 mod tracking;
 mod tui_cmd;
+mod turso_cmd;
 mod watch;
 
 pub use capture::run as capture;
@@ -36,4 +37,5 @@ pub use tracking::{
     import_calendar, import_meeting, import_transcript, screen_capture, track, voice,
 };
 pub use tui_cmd::run as tui;
+pub use turso_cmd::run as turso;
 pub use watch::run as watch;
