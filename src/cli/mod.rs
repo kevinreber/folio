@@ -174,9 +174,9 @@ pub enum Commands {
         dry_run: bool,
     },
 
-    /// Sync activities from external sources (git, GitHub, Linear)
+    /// Sync activities from external sources (git, GitHub, Linear, Claude Code)
     Sync {
-        /// Source to sync from (git, github, linear, or all)
+        /// Source to sync from (git, github, linear, claude, or all)
         #[arg(short, long)]
         source: Option<String>,
 
