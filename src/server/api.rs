@@ -18,7 +18,7 @@ use crate::types::{Accomplishment, Activity, Importance};
 
 /// Embedded web UI assets (compiled into the binary)
 #[derive(Embed)]
-#[folder = "web-ui/"]
+#[folder = "web-ui/dist/"]
 struct WebAssets;
 
 /// Shared application state
