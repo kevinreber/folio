@@ -105,8 +105,13 @@ fn load_credentials() -> Option<TursoCredentials> {
     }
 
     match (url, token) {
-        (Some(database_url), Some(auth_token)) if !database_url.is_empty() && !auth_token.is_empty() => {
-            Some(TursoCredentials { database_url, auth_token })
+        (Some(database_url), Some(auth_token))
+            if !database_url.is_empty() && !auth_token.is_empty() =>
+        {
+            Some(TursoCredentials {
+                database_url,
+                auth_token,
+            })
         }
         _ => None,
     }
@@ -431,16 +436,18 @@ impl TursoDB {
             let last_prompt_at: String = row.get(7)?;
             let date: String = row.get(1)?;
 
-            let entry = stats.entry(project.clone()).or_insert(ProjectAggregateBuilder {
-                project,
-                sessions: 0,
-                total_prompts: 0,
-                total_minutes: 0,
-                is_personal: is_personal != 0,
-                first_seen: first_prompt_at.clone(),
-                last_seen: last_prompt_at.clone(),
-                days_active: HashSet::new(),
-            });
+            let entry = stats
+                .entry(project.clone())
+                .or_insert(ProjectAggregateBuilder {
+                    project,
+                    sessions: 0,
+                    total_prompts: 0,
+                    total_minutes: 0,
+                    is_personal: is_personal != 0,
+                    first_seen: first_prompt_at.clone(),
+                    last_seen: last_prompt_at.clone(),
+                    days_active: HashSet::new(),
+                });
 
             entry.sessions += 1;
             entry.total_prompts += prompt_count;
@@ -575,7 +582,10 @@ impl TursoDB {
              FROM activities WHERE {where_sql} ORDER BY date, category, source"
         );
 
-        let mut rows = self.conn.query(&sql, libsql::params_from_iter(params)).await?;
+        let mut rows = self
+            .conn
+            .query(&sql, libsql::params_from_iter(params))
+            .await?;
         let mut results = Vec::new();
 
         while let Some(row) = rows.next().await? {
@@ -588,9 +598,17 @@ impl TursoDB {
                 category: row.get(1)?,
                 source: row.get(2)?,
                 title: row.get(3)?,
-                detail: if detail.is_empty() { None } else { Some(detail) },
+                detail: if detail.is_empty() {
+                    None
+                } else {
+                    Some(detail)
+                },
                 url: if url.is_empty() { None } else { Some(url) },
-                metadata: if metadata.is_empty() { None } else { Some(metadata) },
+                metadata: if metadata.is_empty() {
+                    None
+                } else {
+                    Some(metadata)
+                },
                 tag: row.get(7)?,
             });
         }
@@ -636,7 +654,10 @@ impl TursoDB {
              FROM summaries WHERE {where_sql} ORDER BY date DESC"
         );
 
-        let mut rows = self.conn.query(&sql, libsql::params_from_iter(params)).await?;
+        let mut rows = self
+            .conn
+            .query(&sql, libsql::params_from_iter(params))
+            .await?;
         let mut results = Vec::new();
 
         while let Some(row) = rows.next().await? {
@@ -646,7 +667,11 @@ impl TursoDB {
                 period: row.get(1)?,
                 summary_type: row.get(2)?,
                 content: row.get(3)?,
-                metadata: if metadata.is_empty() { None } else { Some(metadata) },
+                metadata: if metadata.is_empty() {
+                    None
+                } else {
+                    Some(metadata)
+                },
             });
         }
 
