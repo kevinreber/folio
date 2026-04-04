@@ -92,7 +92,11 @@ fn sync_git(
         (vec![r], None, 1)
     } else if !config.git.email_tags.is_empty() {
         // Device-based scanning: scan all commits, tag by email
-        (config.git.scan_dirs.clone(), None, config.git.min_lines_changed)
+        (
+            config.git.scan_dirs.clone(),
+            None,
+            config.git.min_lines_changed,
+        )
     } else {
         // Legacy: filter by single email
         (

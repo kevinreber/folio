@@ -70,8 +70,8 @@ impl ClaudeCodeScanner {
             return Ok(vec![]);
         }
 
-        let file = std::fs::File::open(path)
-            .with_context(|| format!("Failed to open {:?}", path))?;
+        let file =
+            std::fs::File::open(path).with_context(|| format!("Failed to open {:?}", path))?;
         let reader = std::io::BufReader::new(file);
 
         let cutoff = Utc::now() - chrono::Duration::days(self.config.days_back as i64);
@@ -84,7 +84,8 @@ impl ClaudeCodeScanner {
                 continue;
             }
             if let Ok(entry) = serde_json::from_str::<HistoryEntry>(&line) {
-                let ts = Utc.timestamp_millis_opt(entry.timestamp as i64)
+                let ts = Utc
+                    .timestamp_millis_opt(entry.timestamp as i64)
                     .single()
                     .unwrap_or_else(Utc::now);
                 if ts >= cutoff {
@@ -133,14 +134,14 @@ impl ClaudeCodeScanner {
                 let project_name = extract_project_name(&project);
                 let is_personal = project.contains("/personal/");
 
-                let first_ts = Utc.timestamp_millis_opt(prompts[0].timestamp as i64)
+                let first_ts = Utc
+                    .timestamp_millis_opt(prompts[0].timestamp as i64)
                     .single()
                     .unwrap_or_else(Utc::now);
-                let last_ts = Utc.timestamp_millis_opt(
-                    prompts.last().unwrap().timestamp as i64,
-                )
-                .single()
-                .unwrap_or_else(Utc::now);
+                let last_ts = Utc
+                    .timestamp_millis_opt(prompts.last().unwrap().timestamp as i64)
+                    .single()
+                    .unwrap_or_else(Utc::now);
 
                 Some(SessionGroup {
                     session_id,
@@ -165,10 +166,12 @@ impl ClaudeCodeScanner {
         } else {
             let mut active_mins = 0i64;
             for window in session.prompts.windows(2) {
-                let gap = (Utc.timestamp_millis_opt(window[1].timestamp as i64)
+                let gap = (Utc
+                    .timestamp_millis_opt(window[1].timestamp as i64)
                     .single()
                     .unwrap_or_else(Utc::now)
-                    - Utc.timestamp_millis_opt(window[0].timestamp as i64)
+                    - Utc
+                        .timestamp_millis_opt(window[0].timestamp as i64)
                         .single()
                         .unwrap_or_else(Utc::now))
                 .num_minutes();
@@ -247,7 +250,10 @@ impl ClaudeCodeScanner {
             lines.push(format!("- {}", truncate_prompt(&prompt.display, 150)));
         }
         if session.prompts.len() > show_count {
-            lines.push(format!("  ... and {} more prompts", session.prompts.len() - show_count));
+            lines.push(format!(
+                "  ... and {} more prompts",
+                session.prompts.len() - show_count
+            ));
         }
 
         lines.join("\n")
@@ -266,7 +272,18 @@ impl ClaudeCodeScanner {
         for prompt in prompts {
             for word in prompt.display.split_whitespace() {
                 if url_patterns.iter().any(|p| word.contains(p)) {
-                    let clean = word.trim_matches(|c: char| !c.is_alphanumeric() && c != '/' && c != ':' && c != '.' && c != '-' && c != '_' && c != '?' && c != '=' && c != '&' && c != '#');
+                    let clean = word.trim_matches(|c: char| {
+                        !c.is_alphanumeric()
+                            && c != '/'
+                            && c != ':'
+                            && c != '.'
+                            && c != '-'
+                            && c != '_'
+                            && c != '?'
+                            && c != '='
+                            && c != '&'
+                            && c != '#'
+                    });
                     if !refs.contains(&clean.to_string()) {
                         refs.push(clean.to_string());
                     }
@@ -318,10 +335,7 @@ fn extract_project_name(project_path: &str) -> String {
     // Pattern 1: Claude Code worktrees — .claude/worktrees/<name>
     // e.g., /path/to/inops/.claude/worktrees/decom-rules-ui → inops
     if let Some(pos) = parts.iter().position(|&s| s == ".claude") {
-        if pos > 0
-            && parts.get(pos + 1) == Some(&"worktrees")
-            && parts.get(pos + 2).is_some()
-        {
+        if pos > 0 && parts.get(pos + 1) == Some(&"worktrees") && parts.get(pos + 2).is_some() {
             return parts[pos - 1].to_string();
         }
     }
