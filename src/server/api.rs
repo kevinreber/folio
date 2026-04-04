@@ -14,6 +14,7 @@ use tower_http::cors::{Any, CorsLayer};
 
 use crate::config::Config;
 use crate::db::Database;
+use crate::turso::TursoDB;
 use crate::types::{Accomplishment, Activity, Importance};
 
 /// Embedded web UI assets (compiled into the binary)
@@ -24,12 +25,17 @@ struct WebAssets;
 /// Shared application state
 pub struct AppState {
     pub db: Mutex<Database>,
+    pub turso: TursoDB,
 }
 
 /// Start the REST API server
 pub async fn serve(host: &str, port: u16, open_browser: bool) -> Result<()> {
     let db = Database::open()?;
-    let state = Arc::new(AppState { db: Mutex::new(db) });
+    let turso = TursoDB::connect().await?;
+    let state = Arc::new(AppState {
+        db: Mutex::new(db),
+        turso,
+    });
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -911,110 +917,39 @@ async fn get_claude_projects(
     State(state): State<Arc<AppState>>,
     Query(query): Query<ClaudeProjectsQuery>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let db = state.db.lock().await;
-    let activities = db.list_activities(None).map_err(|e| ApiError {
-        error: e.to_string(),
-    })?;
-
     let days = query.days.unwrap_or(30);
-    let cutoff = chrono::Utc::now() - chrono::Duration::days(days as i64);
+    let projects = state
+        .turso
+        .get_sessions_by_project(days)
+        .await
+        .map_err(|e| ApiError {
+            error: e.to_string(),
+        })?;
 
-    // Filter to claude_code activities within time range
-    let claude_activities: Vec<&Activity> = activities
+    let total_sessions: usize = projects.iter().map(|p| p.sessions).sum();
+
+    let projects_json: Vec<serde_json::Value> = projects
         .iter()
-        .filter(|a| a.source.to_string() == "claude_code" && a.timestamp >= cutoff)
-        .collect();
-
-    // Aggregate by project
-    let mut project_stats: std::collections::HashMap<String, ProjectStats> =
-        std::collections::HashMap::new();
-
-    for a in &claude_activities {
-        let raw_project = a.project.as_deref().unwrap_or("unknown");
-        // Normalize: resolve worktrees to parent project
-        let project = normalize_project_name(
-            raw_project,
-            a.metadata.get("project_path").and_then(|v| v.as_str()),
-        );
-        let stats = project_stats
-            .entry(project.clone())
-            .or_insert(ProjectStats {
-                project,
-                sessions: 0,
-                total_prompts: 0,
-                total_minutes: 0,
-                is_personal: false,
-                first_seen: a.timestamp,
-                last_seen: a.timestamp,
-                days_active: std::collections::HashSet::new(),
-            });
-
-        stats.sessions += 1;
-
-        // Extract prompt count and duration from metadata
-        if let Some(count) = a.metadata.get("prompt_count").and_then(|v| v.as_u64()) {
-            stats.total_prompts += count as usize;
-        }
-        if let Some(mins) = a.metadata.get("duration_minutes").and_then(|v| v.as_i64()) {
-            stats.total_minutes += mins.max(0) as usize;
-        }
-        if let Some(personal) = a.metadata.get("is_personal").and_then(|v| v.as_bool()) {
-            stats.is_personal = personal;
-        }
-
-        if a.timestamp < stats.first_seen {
-            stats.first_seen = a.timestamp;
-        }
-        if a.timestamp > stats.last_seen {
-            stats.last_seen = a.timestamp;
-        }
-        stats
-            .days_active
-            .insert(a.timestamp.format("%Y-%m-%d").to_string());
-    }
-
-    // Convert to sorted list
-    let mut projects: Vec<serde_json::Value> = project_stats
-        .into_values()
-        .map(|s| {
+        .map(|p| {
             serde_json::json!({
-                "project": s.project,
-                "sessions": s.sessions,
-                "total_prompts": s.total_prompts,
-                "total_minutes": s.total_minutes,
-                "is_personal": s.is_personal,
-                "days_active": s.days_active.len(),
-                "first_seen": s.first_seen.to_rfc3339(),
-                "last_seen": s.last_seen.to_rfc3339(),
+                "project": p.project,
+                "sessions": p.sessions,
+                "total_prompts": p.total_prompts,
+                "total_minutes": p.total_minutes,
+                "is_personal": p.is_personal,
+                "days_active": p.days_active,
+                "first_seen": p.first_seen,
+                "last_seen": p.last_seen,
             })
         })
         .collect();
 
-    // Sort by total prompts descending
-    projects.sort_by(|a, b| {
-        b.get("total_prompts")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(0)
-            .cmp(&a.get("total_prompts").and_then(|v| v.as_u64()).unwrap_or(0))
-    });
-
     Ok(Json(serde_json::json!({
         "days": days,
-        "total_sessions": claude_activities.len(),
-        "total_projects": projects.len(),
-        "projects": projects,
+        "total_sessions": total_sessions,
+        "total_projects": projects_json.len(),
+        "projects": projects_json,
     })))
-}
-
-struct ProjectStats {
-    project: String,
-    sessions: usize,
-    total_prompts: usize,
-    total_minutes: usize,
-    is_personal: bool,
-    first_seen: chrono::DateTime<chrono::Utc>,
-    last_seen: chrono::DateTime<chrono::Utc>,
-    days_active: std::collections::HashSet<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -1026,60 +961,30 @@ async fn get_claude_heatmap(
     State(state): State<Arc<AppState>>,
     Query(query): Query<ClaudeHeatmapQuery>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let db = state.db.lock().await;
-    let activities = db.list_activities(None).map_err(|e| ApiError {
-        error: e.to_string(),
-    })?;
-
     let days = query.days.unwrap_or(90);
-    let cutoff = chrono::Utc::now() - chrono::Duration::days(days as i64);
+    let entries = state
+        .turso
+        .get_session_heatmap(days)
+        .await
+        .map_err(|e| ApiError {
+            error: e.to_string(),
+        })?;
 
-    // Build a project x date matrix
-    let mut matrix: std::collections::HashMap<String, std::collections::HashMap<String, usize>> =
-        std::collections::HashMap::new();
-
-    for a in &activities {
-        if a.source.to_string() != "claude_code" || a.timestamp < cutoff {
-            continue;
-        }
-        let raw_project = a.project.as_deref().unwrap_or("unknown");
-        let project = normalize_project_name(
-            raw_project,
-            a.metadata.get("project_path").and_then(|v| v.as_str()),
-        );
-        let date = a.timestamp.format("%Y-%m-%d").to_string();
-        let prompts = a
-            .metadata
-            .get("prompt_count")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(1) as usize;
-
-        *matrix.entry(project).or_default().entry(date).or_insert(0) += prompts;
-    }
-
-    // Convert to response format
-    let mut projects: Vec<serde_json::Value> = matrix
-        .into_iter()
-        .map(|(project, dates)| {
-            let total: usize = dates.values().sum();
-            let days_data: Vec<serde_json::Value> = dates
-                .into_iter()
-                .map(|(date, count)| serde_json::json!({"date": date, "prompts": count}))
+    let projects: Vec<serde_json::Value> = entries
+        .iter()
+        .map(|e| {
+            let days_data: Vec<serde_json::Value> = e
+                .days
+                .iter()
+                .map(|d| serde_json::json!({"date": d.date, "prompts": d.prompts}))
                 .collect();
             serde_json::json!({
-                "project": project,
-                "total_prompts": total,
+                "project": e.project,
+                "total_prompts": e.total_prompts,
                 "days": days_data,
             })
         })
         .collect();
-
-    projects.sort_by(|a, b| {
-        b.get("total_prompts")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(0)
-            .cmp(&a.get("total_prompts").and_then(|v| v.as_u64()).unwrap_or(0))
-    });
 
     Ok(Json(serde_json::json!({
         "days": days,

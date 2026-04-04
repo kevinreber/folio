@@ -11,6 +11,7 @@ mod notifications;
 mod server;
 mod tracking;
 mod tui;
+pub mod turso;
 mod types;
 mod watcher;
 
@@ -145,5 +146,7 @@ fn main() -> Result<()> {
             stop,
             status,
         } => cli::commands::track(foreground, stop, status),
+
+        Commands::Turso { action } => cli::commands::turso(action),
     }
 }

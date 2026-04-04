@@ -3,6 +3,123 @@ pub mod commands;
 use clap::{Parser, Subcommand};
 
 #[derive(Subcommand)]
+pub enum TursoAction {
+    /// Initialize Turso database schema
+    Init,
+
+    /// Write a Claude Code session
+    WriteSession {
+        /// Session ID (from Claude Code)
+        #[arg(long)]
+        session_id: String,
+
+        /// Date (YYYY-MM-DD)
+        #[arg(long)]
+        date: String,
+
+        /// Normalized project name
+        #[arg(long)]
+        project: String,
+
+        /// Raw project path
+        #[arg(long)]
+        project_path: String,
+
+        /// Number of prompts in this session
+        #[arg(long)]
+        prompt_count: i64,
+
+        /// Active duration in minutes
+        #[arg(long)]
+        duration_minutes: i64,
+
+        /// Personal project flag
+        #[arg(long)]
+        is_personal: bool,
+
+        /// First prompt timestamp (ISO 8601)
+        #[arg(long)]
+        first_prompt_at: String,
+
+        /// Last prompt timestamp (ISO 8601)
+        #[arg(long)]
+        last_prompt_at: String,
+
+        /// Extra JSON metadata
+        #[arg(long)]
+        metadata: Option<String>,
+    },
+
+    /// Write an activity row (replaces activity-db write)
+    WriteActivity {
+        #[arg(long)]
+        date: String,
+        #[arg(long)]
+        category: String,
+        #[arg(long)]
+        source: String,
+        #[arg(long)]
+        title: String,
+        #[arg(long)]
+        detail: Option<String>,
+        #[arg(long)]
+        url: Option<String>,
+        #[arg(long)]
+        metadata: Option<String>,
+        #[arg(long, default_value = "work")]
+        tag: String,
+    },
+
+    /// Write a summary (replaces activity-db summary)
+    WriteSummary {
+        #[arg(long)]
+        date: String,
+        /// Period: daily, weekly, monthly, project
+        #[arg(long)]
+        period: String,
+        /// Summary type: review, recap, standup, brag
+        #[arg(long, name = "type")]
+        summary_type: String,
+        #[arg(long)]
+        content: String,
+        #[arg(long)]
+        metadata: Option<String>,
+    },
+
+    /// Query activities (JSON output)
+    Query {
+        #[arg(long)]
+        date: Option<String>,
+        #[arg(long)]
+        start: Option<String>,
+        #[arg(long)]
+        end: Option<String>,
+        #[arg(long)]
+        source: Option<String>,
+        #[arg(long)]
+        category: Option<String>,
+        #[arg(long)]
+        tag: Option<String>,
+    },
+
+    /// Query summaries (JSON output)
+    QuerySummaries {
+        #[arg(long)]
+        date: Option<String>,
+        #[arg(long)]
+        period: Option<String>,
+        #[arg(long, name = "type")]
+        summary_type: Option<String>,
+    },
+
+    /// Force sync with Turso remote
+    Sync,
+
+    /// Show database statistics
+    Stats,
+}
+
+#[derive(Subcommand)]
 pub enum DaemonAction {
     /// Start the daemon in the background
     Start,
@@ -339,6 +456,12 @@ pub enum Commands {
     Daemon {
         #[command(subcommand)]
         action: DaemonAction,
+    },
+
+    /// Interact with the Turso activity database
+    Turso {
+        #[command(subcommand)]
+        action: TursoAction,
     },
 
     /// Start activity tracking (active window, idle detection)

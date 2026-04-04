@@ -8,6 +8,7 @@ use crate::integrations::{
     claude_code::ClaudeCodeConfig, git::GitScanConfig, ClaudeCodeScanner, GitHubClient, GitScanner,
     LinearClient,
 };
+use crate::turso::{SessionRecord, TursoDB};
 use crate::types::Activity;
 
 pub fn run(source: Option<String>, days: u32, repo: Option<PathBuf>, dry_run: bool) -> Result<()> {
@@ -261,20 +262,65 @@ fn sync_claude_code(db: &Database, days: u32, dry_run: bool) -> Result<usize> {
         return Ok(activities.len());
     }
 
+    // Connect to Turso for dual-write
+    let rt = tokio::runtime::Runtime::new()?;
+    let turso = rt.block_on(TursoDB::connect())?;
+
     // Import new activities
     let mut imported = 0;
-    for activity in activities {
+    for activity in &activities {
         let session_id = activity
             .metadata
             .get("session_id")
             .and_then(|v| v.as_str())
             .unwrap_or("");
 
-        if !session_id.is_empty() && !db.activity_exists_by_metadata("session_id", session_id)? {
-            db.insert_activity(&activity)?;
-            imported += 1;
+        if session_id.is_empty() {
+            continue;
         }
+
+        // Write to local Folio DB (backward compat)
+        if !db.activity_exists_by_metadata("session_id", session_id)? {
+            db.insert_activity(activity)?;
+        }
+
+        // Write to Turso
+        let record = SessionRecord {
+            session_id: session_id.to_string(),
+            date: activity.timestamp.format("%Y-%m-%d").to_string(),
+            project: activity.project.clone().unwrap_or_default(),
+            project_path: activity
+                .metadata
+                .get("project_path")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string(),
+            prompt_count: activity
+                .metadata
+                .get("prompt_count")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0),
+            duration_minutes: activity
+                .metadata
+                .get("duration_minutes")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0),
+            is_personal: activity
+                .metadata
+                .get("is_personal")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false),
+            device_id: String::new(), // filled by TursoDB
+            first_prompt_at: activity.timestamp.to_rfc3339(),
+            last_prompt_at: activity.updated_at.to_rfc3339(),
+            metadata: Some(activity.metadata.to_string()),
+            created_at: None,
+        };
+        rt.block_on(turso.write_session(&record))?;
+        imported += 1;
     }
+
+    rt.block_on(turso.sync())?;
 
     println!("  {} Imported {} new sessions", "✓".green(), imported);
     Ok(imported)
