@@ -157,10 +157,6 @@ html, body {
 
 /* --- Views --- */
 .view {
-  display: none;
-}
-
-.view.active {
   display: block;
   animation: fadeIn 200ms ease;
 }

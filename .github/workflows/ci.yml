@@ -12,6 +12,35 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  web-ui:
+    name: Build Web UI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web-ui/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web-ui
+        run: npm ci
+
+      - name: Build
+        working-directory: web-ui
+        run: npx vite build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-ui-dist
+          path: web-ui/dist
+          retention-days: 1
+
   fmt:
     name: Format Check
     runs-on: ubuntu-latest
@@ -29,10 +58,17 @@ jobs:
 
   clippy:
     name: Clippy Lint
+    needs: web-ui
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Download web-ui dist
+        uses: actions/download-artifact@v4
+        with:
+          name: web-ui-dist
+          path: web-ui/dist
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -55,10 +91,17 @@ jobs:
 
   build:
     name: Build
+    needs: web-ui
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Download web-ui dist
+        uses: actions/download-artifact@v4
+        with:
+          name: web-ui-dist
+          path: web-ui/dist
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -79,10 +122,17 @@ jobs:
 
   test:
     name: Tests
+    needs: web-ui
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Download web-ui dist
+        uses: actions/download-artifact@v4
+        with:
+          name: web-ui-dist
+          path: web-ui/dist
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable

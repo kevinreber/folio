@@ -11,17 +11,25 @@ BINARY_NAME := folio
 INSTALL_DIR := $(HOME)/.local/bin
 CARGO := cargo
 
-.PHONY: all build release install uninstall test test-install test-quick clean fmt lint check help
+.PHONY: all build release install uninstall test test-install test-quick clean fmt lint check help web-ui web-ui-dev
 
 # Default target
 all: build
 
-# Build debug binary
-build:
+# Build web UI (React + Vite)
+web-ui:
+	cd web-ui && npm install && npx vite build
+
+# Dev server for web UI (with hot reload)
+web-ui-dev:
+	cd web-ui && npm install && npx vite
+
+# Build debug binary (builds web UI first)
+build: web-ui
 	$(CARGO) build
 
-# Build release binary
-release:
+# Build release binary (builds web UI first)
+release: web-ui
 	$(CARGO) build --release
 
 # Install to ~/.local/bin
