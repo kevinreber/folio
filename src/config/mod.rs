@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// Application configuration
@@ -65,6 +66,9 @@ pub struct GitConfig {
     pub min_lines_changed: usize,
     /// Ignore patterns for repos
     pub ignore_patterns: Vec<String>,
+    /// Email-to-tag mapping for device-based scanning (e.g., email -> "work" or "personal")
+    #[serde(default)]
+    pub email_tags: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -183,6 +187,7 @@ impl Default for GitConfig {
                 "target".to_string(),
                 "vendor".to_string(),
             ],
+            email_tags: HashMap::new(),
         }
     }
 }
@@ -318,8 +323,30 @@ impl Config {
             ["general", "color"] => Some(self.general.color.to_string()),
             ["general", "date_format"] => Some(self.general.date_format.clone()),
             ["git", "enabled"] => Some(self.git.enabled.to_string()),
+            ["git", "scan_dirs"] => Some(
+                self.git
+                    .scan_dirs
+                    .iter()
+                    .map(|p| p.display().to_string())
+                    .collect::<Vec<_>>()
+                    .join(", "),
+            ),
             ["git", "days_back"] => Some(self.git.days_back.to_string()),
             ["git", "min_lines_changed"] => Some(self.git.min_lines_changed.to_string()),
+            ["git", "email_tags"] => {
+                if self.git.email_tags.is_empty() {
+                    Some("(none)".to_string())
+                } else {
+                    Some(
+                        self.git
+                            .email_tags
+                            .iter()
+                            .map(|(k, v)| format!("{}={}", k, v))
+                            .collect::<Vec<_>>()
+                            .join(", "),
+                    )
+                }
+            }
             ["github", "enabled"] => Some(self.github.enabled.to_string()),
             ["github", "token"] => self.github.token.clone(),
             ["github", "days_back"] => Some(self.github.days_back.to_string()),
@@ -375,6 +402,27 @@ impl Config {
             }
             ["git", "enabled"] => {
                 self.git.enabled = value.parse().unwrap_or(false);
+            }
+            ["git", "scan_dirs"] => {
+                self.git.scan_dirs = value
+                    .split(',')
+                    .map(|s| PathBuf::from(s.trim()))
+                    .filter(|p| !p.as_os_str().is_empty())
+                    .collect();
+            }
+            ["git", "email_tags"] => {
+                // Parse "email=tag,email=tag" format
+                self.git.email_tags = value
+                    .split(',')
+                    .filter_map(|pair| {
+                        let parts: Vec<&str> = pair.trim().splitn(2, '=').collect();
+                        if parts.len() == 2 && !parts[0].is_empty() {
+                            Some((parts[0].trim().to_string(), parts[1].trim().to_string()))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
             }
             ["git", "days_back"] => {
                 self.git.days_back = value.parse().unwrap_or(30);
@@ -465,6 +513,8 @@ impl Config {
             "general.color",
             "general.date_format",
             "git.enabled",
+            "git.scan_dirs",
+            "git.email_tags",
             "git.days_back",
             "git.min_lines_changed",
             "github.enabled",

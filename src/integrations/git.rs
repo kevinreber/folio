@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use chrono::{DateTime, TimeZone, Utc};
 use git2::{Commit, Repository};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
@@ -20,6 +20,8 @@ pub struct GitScanConfig {
     pub author_email: Option<String>,
     /// Minimum lines changed to consider significant
     pub min_lines_changed: usize,
+    /// Email-to-tag mapping (e.g., "user@gmail.com" -> "personal")
+    pub email_tags: HashMap<String, String>,
 }
 
 impl Default for GitScanConfig {
@@ -30,6 +32,7 @@ impl Default for GitScanConfig {
             days_back: 30,
             author_email: None,
             min_lines_changed: 10,
+            email_tags: HashMap::new(),
         }
     }
 }
@@ -190,6 +193,16 @@ impl GitScanner {
         // Determine importance based on commit message and stats
         let importance = self.infer_importance(&message, &stats);
 
+        // Look up email tag (work/personal)
+        let author_sig = commit.author();
+        let author_email = author_sig.email().unwrap_or("Unknown");
+        let identity_tag = self
+            .config
+            .email_tags
+            .iter()
+            .find(|(email, _)| email.eq_ignore_ascii_case(author_email))
+            .map(|(_, tag)| tag.clone());
+
         let activity = Activity {
             id: uuid::Uuid::new_v4().to_string(),
             source: ActivitySource::Git,
@@ -207,7 +220,8 @@ impl GitScanner {
             metadata: serde_json::json!({
                 "commit_sha": commit.id().to_string(),
                 "author_name": commit.author().name().unwrap_or("Unknown"),
-                "author_email": commit.author().email().unwrap_or("Unknown"),
+                "author_email": author_email,
+                "identity_tag": identity_tag.as_deref().unwrap_or("unknown"),
                 "files_changed": stats.files_changed,
                 "insertions": stats.insertions,
                 "deletions": stats.deletions,
@@ -282,4 +296,93 @@ pub fn get_git_user_email() -> Option<String> {
     git2::Config::open_default()
         .ok()
         .and_then(|config| config.get_string("user.email").ok())
+}
+
+/// Discover unique author emails across git repos in given directories.
+/// Returns a list of (email, vec_of_repo_names) tuples.
+pub fn discover_emails(
+    scan_dirs: &[PathBuf],
+    max_depth: usize,
+) -> Result<Vec<(String, Vec<String>)>> {
+    let scanner = GitScanner::new(GitScanConfig {
+        scan_dirs: scan_dirs.to_vec(),
+        max_depth,
+        days_back: 90,
+        author_email: None,
+        min_lines_changed: 0,
+        email_tags: HashMap::new(),
+    });
+
+    let repos = scanner.discover_repos()?;
+    let mut email_repos: HashMap<String, HashSet<String>> = HashMap::new();
+    let cutoff = Utc::now() - chrono::Duration::days(90);
+
+    for repo_path in repos {
+        let repo_name = repo_path
+            .file_name()
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or_else(|| "unknown".to_string());
+
+        let repo = match Repository::open(&repo_path) {
+            Ok(r) => r,
+            Err(_) => continue,
+        };
+
+        let mut revwalk = match repo.revwalk() {
+            Ok(r) => r,
+            Err(_) => continue,
+        };
+        let _ = revwalk.push_head();
+        revwalk.set_sorting(git2::Sort::TIME).ok();
+
+        for oid in revwalk.take(200) {
+            let oid = match oid {
+                Ok(o) => o,
+                Err(_) => break,
+            };
+            let commit = match repo.find_commit(oid) {
+                Ok(c) => c,
+                Err(_) => continue,
+            };
+
+            let commit_time = Utc
+                .timestamp_opt(commit.time().seconds(), 0)
+                .single()
+                .unwrap_or_else(Utc::now);
+            if commit_time < cutoff {
+                break;
+            }
+
+            let author = commit.author();
+            if let Some(email) = author.email() {
+                let email_lower = email.to_lowercase();
+                email_repos
+                    .entry(email_lower)
+                    .or_default()
+                    .insert(repo_name.clone());
+            }
+        }
+    }
+
+    let mut results: Vec<(String, Vec<String>)> = email_repos
+        .into_iter()
+        .map(|(email, repos)| {
+            let mut repos: Vec<String> = repos.into_iter().collect();
+            repos.sort();
+            (email, repos)
+        })
+        .collect();
+    results.sort_by(|a, b| a.0.cmp(&b.0));
+
+    Ok(results)
+}
+
+/// Discover git repos in given directories and return their paths.
+pub fn discover_repos_in(scan_dirs: &[PathBuf], max_depth: usize) -> Result<Vec<PathBuf>> {
+    let scanner = GitScanner::new(GitScanConfig {
+        scan_dirs: scan_dirs.to_vec(),
+        max_depth,
+        ..Default::default()
+    });
+    scanner.discover_repos()
 }
