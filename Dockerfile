@@ -15,8 +15,8 @@ COPY src/ src/
 COPY --from=web-builder /app/web-ui/dist/ web-ui/dist/
 RUN cargo build --release
 
-# Stage 3: Runtime
-FROM debian:bookworm-slim
+# Stage 3: Runtime — use debian:trixie-slim to match rust:latest GLIBC
+FROM debian:trixie-slim
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY --from=rust-builder /app/target/release/folio /usr/local/bin/folio
 EXPOSE 8080
