@@ -939,15 +939,15 @@ async fn get_claude_projects(
         let stats = project_stats
             .entry(project.clone())
             .or_insert(ProjectStats {
-            project,
-            sessions: 0,
-            total_prompts: 0,
-            total_minutes: 0,
-            is_personal: false,
-            first_seen: a.timestamp,
-            last_seen: a.timestamp,
-            days_active: std::collections::HashSet::new(),
-        });
+                project,
+                sessions: 0,
+                total_prompts: 0,
+                total_minutes: 0,
+                is_personal: false,
+                first_seen: a.timestamp,
+                last_seen: a.timestamp,
+                days_active: std::collections::HashSet::new(),
+            });
 
         stats.sessions += 1;
 
@@ -1104,9 +1104,12 @@ async fn get_config() -> Result<impl IntoResponse, ApiError> {
         .map(|dir| {
             let exists = dir.exists();
             let repo_count = if exists {
-                crate::integrations::git::discover_repos_in(std::slice::from_ref(dir), config.git.max_depth)
-                    .map(|r| r.len())
-                    .unwrap_or(0)
+                crate::integrations::git::discover_repos_in(
+                    std::slice::from_ref(dir),
+                    config.git.max_depth,
+                )
+                .map(|r| r.len())
+                .unwrap_or(0)
             } else {
                 0
             };
@@ -1201,7 +1204,8 @@ async fn discover_config() -> Result<impl IntoResponse, ApiError> {
         .filter(|dir| dir.exists())
         .map(|dir| {
             let repos =
-                crate::integrations::git::discover_repos_in(std::slice::from_ref(dir), 3).unwrap_or_default();
+                crate::integrations::git::discover_repos_in(std::slice::from_ref(dir), 3)
+                    .unwrap_or_default();
             serde_json::json!({
                 "path": dir.display().to_string(),
                 "repo_count": repos.len(),

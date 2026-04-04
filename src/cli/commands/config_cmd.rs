@@ -133,8 +133,8 @@ pub fn init() -> Result<()> {
     let mut found_dirs: Vec<(PathBuf, usize)> = Vec::new();
     for dir in &candidate_dirs {
         if dir.exists() {
-            let repos =
-                crate::integrations::git::discover_repos_in(std::slice::from_ref(dir), 3).unwrap_or_default();
+            let repos = crate::integrations::git::discover_repos_in(std::slice::from_ref(dir), 3)
+                .unwrap_or_default();
             if !repos.is_empty() {
                 found_dirs.push((dir.clone(), repos.len()));
             }
