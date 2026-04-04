@@ -1203,9 +1203,8 @@ async fn discover_config() -> Result<impl IntoResponse, ApiError> {
         .into_iter()
         .filter(|dir| dir.exists())
         .map(|dir| {
-            let repos =
-                crate::integrations::git::discover_repos_in(std::slice::from_ref(dir), 3)
-                    .unwrap_or_default();
+            let repos = crate::integrations::git::discover_repos_in(std::slice::from_ref(dir), 3)
+                .unwrap_or_default();
             serde_json::json!({
                 "path": dir.display().to_string(),
                 "repo_count": repos.len(),
