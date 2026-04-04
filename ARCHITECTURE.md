@@ -457,3 +457,11 @@ User configures their preference. All LLM calls are optional — the tool works 
 - [ ] Multi-device sync (optional, encrypted)
 - [ ] Job description matching ("tailor resume for this role")
 - [ ] Interview prep mode ("practice talking about this accomplishment")
+
+### Phase 6: Analytics & AI Insights (Future)
+- [ ] **Grafana integration (optional)** — `folio grafana` command to spin up a pre-configured Grafana instance pointing at `~/.folio/folio.db` via the SQLite datasource plugin. Embeddable panels for deep analytics (time-series trends, stacked area charts, advanced heatmaps) surfaced in a dedicated `/analytics` route in the web UI. Runs as a Docker container; Folio works fully without it.
+- [ ] **AI-powered activity consolidation** — use LLM to summarize clusters of related activities into coherent narratives (e.g., "Over 3 weeks you shipped the OAuth2 migration across 47 commits")
+- [ ] **Smart weekly/monthly highlights** — AI picks the top accomplishments from a time period and explains why they matter, surfaced in the dashboard
+- [ ] **Auto-tagging and categorization** — LLM-driven theme detection across activities (e.g., "reliability", "mentoring", "performance optimization")
+- [ ] **Career trend analysis** — Grafana dashboards showing skill growth over time, project focus shifts, and contribution patterns across employers
+- [ ] **Real-time push updates** — SSE endpoint in Axum so the web UI updates instantly when git sync or background watcher captures new activities (complements TanStack Query's polling)
