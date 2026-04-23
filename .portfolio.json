@@ -1,0 +1,8 @@
+{
+  "displayName": "Folio",
+  "description": "Local-first CLI and TUI for tracking career accomplishments. Enriches entries with AI, packages them into resume bullets, brag docs, and interview-ready stories — all stored in SQLite.",
+  "tech": ["Rust", "SQLite", "Ratatui", "Axum", "LLM", "Git"],
+  "thumbnail": "docs/images/thumbnail.png",
+  "demo": "docs/images/demo.gif",
+  "order": 6
+}
